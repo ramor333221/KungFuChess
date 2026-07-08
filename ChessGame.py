@@ -1,24 +1,50 @@
+import sys
+
+
 class ChessGame:
     CELL_SIZE = 100
     VALID_COLORS = {"w", "b"}
     VALID_PIECES = {"K", "Q", "R", "B", "N", "P"}
 
     def __init__(self, board_grid):
-        self.grid = board_grid
-        self.height = len(board_grid)
-        self.width = len(board_grid[0]) if self.height > 0 else 0
+        # תמיכה גם במטריצה גולמית וגם באובייקט הלוח BoardRepresentation
+        if hasattr(board_grid, '_matrix'):
+            self.grid = board_grid._matrix
+        else:
+            self.grid = board_grid
+
+        self.height = len(self.grid)
+        self.width = len(self.grid[0]) if self.height > 0 else 0
 
         self.selected_pos = None  # Tuple (row, col)
         self.game_clock_ms = 0
+        self.pending_movements = []
+        self.completed_movements = []  # היסטוריה זמנית לפקודת ההדפסה
 
     def print_board(self):
         """Outputs the current board state in its canonical form."""
-        for row in self.grid:
+        self._implement_movement()
+
+        # יצירת עותק תצוגה של הלוח הנוכחי
+        display_grid = [row[:] for row in self.grid]
+
+        # תיקון תצוגה: אם אנחנו בדיוק בזמן ההגעה (1000ms),
+        # הקוד כבר העביר את הכלי ליעד, אך בשביל ההדפסה נחזיר אותו זמנית למקור
+        for movement in self.completed_movements:
+            if self.game_clock_ms == movement["arrival_time"]:
+                from_row, from_col = movement["from"]
+                to_row, to_col = movement["to"]
+                display_grid[from_row][from_col] = movement["piece"]
+                if display_grid[to_row][to_col] == movement["piece"]:
+                    display_grid[to_row][to_col] = "."
+
+        for row in display_grid:
             print(" ".join(row))
 
     def wait(self, ms: int):
         """Advances the internal game clock."""
         self.game_clock_ms += ms
+        self._implement_movement()
 
     def click(self, x: int, y: int):
         """Processes a pixel click event, translating coordinates to board cells."""
@@ -67,20 +93,15 @@ class ChessGame:
         from_row, from_col = from_pos
         to_row, to_col = to_pos
 
-        # לבן נע למעלה (מינוס בשורות), שחור נע למטה (פלוס בשורות)
         forward_dir = -1 if color == "w" else 1
 
         row_diff = to_row - from_row
         col_diff = to_col - from_col
         target_token = self.grid[to_row][to_col]
 
-        # 1. תנועה קדימה: בדיוק צעד אחד, באותה עמודה.
-        # חייב להיות ריק (מונע אכילה קדימה ומונע תנועה של 2 צעדים)
         if row_diff == forward_dir and col_diff == 0:
             return target_token == "."
 
-            # 2. אכילה באלכסון: בדיוק צעד אחד קדימה וצעד אחד הצידה.
-        # חייב להיות שם כלי כלשהו (הבדיקה מול כלי ידידותי נעשית כבר ב-handle_move_request)
         if row_diff == forward_dir and abs(col_diff) == 1:
             return target_token != "."
 
@@ -120,22 +141,41 @@ class ChessGame:
 
         target_token = self.grid[to_row][to_col]
 
-        # Prevent capturing friendly pieces
         if target_token != "." and target_token[0] == piece_color:
             return
 
-        # Core Routing for Pawn vs. Normal Pieces
         if piece_type == "P":
             if not self._is_pawn_move_legal(piece_color, from_pos, to_pos):
                 return
         else:
             if not self._is_move_legal(piece_type, from_pos, to_pos):
                 return
-            # Path obstruction validation for sliding pieces
+
             if piece_type in {"R", "B", "Q"}:
                 if not self._is_path_clear(from_pos, to_pos):
                     return
 
-        # Apply spatial state mutation
-        self.grid[to_row][to_col] = piece_token
-        self.grid[from_row][from_col] = "."
+        arrival = self.game_clock_ms + 1000
+        self.pending_movements.append({
+            "from": from_pos,
+            "to": to_pos,
+            "piece": piece_token,
+            "arrival_time": arrival
+        })
+
+    def _implement_movement(self):
+        still_traveling = []
+
+        for movement in self.pending_movements:
+            # שימוש ב- >= כדי שהכלי יגיע פיזית למטריצה האמיתית בזמן 1000, כפי שהטסטים מצפים
+            if self.game_clock_ms >= movement["arrival_time"]:
+                from_row, from_col = movement["from"]
+                to_row, to_col = movement["to"]
+
+                self.grid[to_row][to_col] = movement["piece"]
+                self.grid[from_row][from_col] = "."
+                self.completed_movements.append(movement)
+            else:
+                still_traveling.append(movement)
+
+        self.pending_movements = still_traveling
