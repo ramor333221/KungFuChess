@@ -2,7 +2,7 @@ import unittest
 from io import StringIO
 import contextlib
 
-from Board.BoardRepresentation import BoardRepresentation
+from BoardRepresentation import BoardRepresentation
 from BoardParser import BoardParser
 from BoardValidator import BoardValidator
 import main

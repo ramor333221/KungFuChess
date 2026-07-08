@@ -1,11 +1,9 @@
 from typing import List, Set, Optional
+from BoardRepresentation import BoardRepresentation
 
-from Board.BoardRepresentation import BoardRepresentation
-
-EMPTY_CELL = '.'
-DEFAULT_VALID_COLORS = {'w', 'b'}
-DEFAULT_VALID_PIECES = {'K', 'Q', 'R', 'B', 'N', 'P'}
-
+DEFAULT_VALID_COLORS = {"w", "b"}
+DEFAULT_VALID_PIECES = {"K", "Q", "R", "B", "N", "P"}
+EMPTY_CELL = "."
 
 class BoardValidator:
     def __init__(self, valid_colors: Set[str] = None, valid_pieces: Set[str] = None):
@@ -22,7 +20,6 @@ class BoardValidator:
             if len(row) != expected_width:
                 print("ERROR ROW_WIDTH_MISMATCH")
                 return None
-
             for token in row:
                 if token == EMPTY_CELL:
                     continue
