@@ -175,12 +175,10 @@ class ChessGame:
                 to_row, to_col = movement["to"]
                 piece = movement["piece"]  # למשל 'wP'
 
-                # 1. בדיקת Game Over (מהשלב הקודם)
                 target_piece = self.grid[to_row][to_col]
                 if len(target_piece) == 2 and target_piece[1] == "K":
                     self.game_over = True
 
-                # 2. בדיקת הכתרה (חדש!)
                 piece_color = piece[0]
                 piece_type = piece[1]
                 last_row = 0 if piece_color == "w" else (self.height - 1)
