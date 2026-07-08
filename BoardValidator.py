@@ -1,14 +1,13 @@
 from typing import List, Set, Optional
 from BoardRepresentation import BoardRepresentation
+from ChessGame import ChessGame
 
-DEFAULT_VALID_COLORS = {"w", "b"}
-DEFAULT_VALID_PIECES = {"K", "Q", "R", "B", "N", "P"}
 EMPTY_CELL = "."
 
 class BoardValidator:
     def __init__(self, valid_colors: Set[str] = None, valid_pieces: Set[str] = None):
-        self.valid_colors = valid_colors or DEFAULT_VALID_COLORS
-        self.valid_pieces = valid_pieces or DEFAULT_VALID_PIECES
+        self.valid_colors = valid_colors or ChessGame.VALID_COLORS
+        self.valid_pieces = valid_pieces or ChessGame.VALID_PIECES
 
     def validate(self, raw_rows: List[List[str]]) -> Optional[BoardRepresentation]:
         if not raw_rows or not raw_rows[0]:

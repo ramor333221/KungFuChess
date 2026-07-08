@@ -5,20 +5,16 @@ from ChessGame import ChessGame
 
 
 def main():
-    # 1. Parse
     parser = BoardParser(sys.stdin)
     raw_rows, command_lines = parser.parse_input()
 
-    # 2. Validate
     validator = BoardValidator()
     board = validator.validate(raw_rows)
     if not board:
         return
 
-    # 3. Instantiate Engine
     game = ChessGame(board)
 
-    # 4. Process Commands
     for command in command_lines:
         parts = command.split()
         if not parts:
