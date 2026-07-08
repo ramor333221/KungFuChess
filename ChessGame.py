@@ -7,38 +7,18 @@ class ChessGame:
     VALID_PIECES = {"K", "Q", "R", "B", "N", "P"}
 
     def __init__(self, board_grid):
-        # תמיכה גם במטריצה גולמית וגם באובייקט הלוח BoardRepresentation
-        if hasattr(board_grid, '_matrix'):
-            self.grid = board_grid._matrix
-        else:
-            self.grid = board_grid
-
-        self.height = len(self.grid)
-        self.width = len(self.grid[0]) if self.height > 0 else 0
+        self.grid = board_grid
+        self.height = len(board_grid)
+        self.width = len(board_grid[0]) if self.height > 0 else 0
 
         self.selected_pos = None  # Tuple (row, col)
         self.game_clock_ms = 0
         self.pending_movements = []
-        self.completed_movements = []  # היסטוריה זמנית לפקודת ההדפסה
 
     def print_board(self):
         """Outputs the current board state in its canonical form."""
         self._implement_movement()
-
-        # יצירת עותק תצוגה של הלוח הנוכחי
-        display_grid = [row[:] for row in self.grid]
-
-        # תיקון תצוגה: אם אנחנו בדיוק בזמן ההגעה (1000ms),
-        # הקוד כבר העביר את הכלי ליעד, אך בשביל ההדפסה נחזיר אותו זמנית למקור
-        for movement in self.completed_movements:
-            if self.game_clock_ms == movement["arrival_time"]:
-                from_row, from_col = movement["from"]
-                to_row, to_col = movement["to"]
-                display_grid[from_row][from_col] = movement["piece"]
-                if display_grid[to_row][to_col] == movement["piece"]:
-                    display_grid[to_row][to_col] = "."
-
-        for row in display_grid:
+        for row in self.grid:
             print(" ".join(row))
 
     def wait(self, ms: int):
@@ -48,6 +28,9 @@ class ChessGame:
 
     def click(self, x: int, y: int):
         """Processes a pixel click event, translating coordinates to board cells."""
+        # תמיד נעדכן תנועות לפני עיבוד לחיצה כדי לשחרר את הנעילה אם הזמן עבר
+        self._implement_movement()
+
         col = x // self.CELL_SIZE
         row = y // self.CELL_SIZE
 
@@ -136,10 +119,18 @@ class ChessGame:
         to_row, to_col = to_pos
 
         piece_token = self.grid[from_row][from_col]
+
+        # אם משבצת המקור כבר התרוקנה (למשל כלי כבר בדרך), נתעלם
+        if piece_token == ".":
+            return
+
         piece_color = piece_token[0]
         piece_type = piece_token[1]
-
         target_token = self.grid[to_row][to_col]
+
+        # חסימה גלובלית: מניעת פקודות חדשות אם יש כלי בדרך
+        if len(self.pending_movements) > 0:
+            return
 
         if target_token != "." and target_token[0] == piece_color:
             return
@@ -163,19 +154,100 @@ class ChessGame:
             "arrival_time": arrival
         })
 
+        # מוחקים מיד את הכלי ממשבצת המקור כדי שלא יהיה ניתן להזיז אותו שוב בטעות בזמן הטיסה
+        self.grid[from_row][from_col] = "."
+
     def _implement_movement(self):
         still_traveling = []
 
         for movement in self.pending_movements:
-            # שימוש ב- >= כדי שהכלי יגיע פיזית למטריצה האמיתית בזמן 1000, כפי שהטסטים מצפים
+            # הכלים מגיעים רשמית ליעד בזמן >= (למשל אחרי wait 1000)
             if self.game_clock_ms >= movement["arrival_time"]:
-                from_row, from_col = movement["from"]
                 to_row, to_col = movement["to"]
-
                 self.grid[to_row][to_col] = movement["piece"]
-                self.grid[from_row][from_col] = "."
-                self.completed_movements.append(movement)
             else:
                 still_traveling.append(movement)
 
         self.pending_movements = still_traveling
+
+
+class CommandParser:
+    @staticmethod
+    def parse_initial_input():
+        lines = [line.strip() for line in sys.stdin]
+        board_rows = []
+        command_lines = []
+
+        is_board_section = False
+        is_command_section = False
+
+        for line in lines:
+            if not line:
+                continue
+            if line.startswith("Board:"):
+                is_board_section = True
+                continue
+            if line.startswith("Commands:"):
+                is_board_section = False
+                is_command_section = True
+                continue
+
+            if is_board_section:
+                tokens = line.split()
+                if tokens:
+                    board_rows.append(tokens)
+            elif is_command_section:
+                command_lines.append(line)
+
+        return board_rows, command_lines
+
+    @staticmethod
+    def validate_board(board_rows) -> bool:
+        if not board_rows:
+            return False
+        expected_width = len(board_rows[0])
+        for row in board_rows:
+            if len(row) != expected_width:
+                print("ERROR ROW_WIDTH_MISMATCH")
+                return False
+            for token in row:
+                if token == ".":
+                    continue
+                if len(token) != 2 or token[0] not in ChessGame.VALID_COLORS or token[1] not in ChessGame.VALID_PIECES:
+                    print("ERROR UNKNOWN_TOKEN")
+                    return False
+        return True
+
+
+def main():
+    board_rows, command_lines = CommandParser.parse_initial_input()
+    if not CommandParser.validate_board(board_rows):
+        return
+
+    game = ChessGame(board_rows)
+
+    for command in command_lines:
+        parts = command.split()
+        if not parts:
+            continue
+
+        cmd_type = parts[0]
+
+        if cmd_type == "click" and len(parts) == 3:
+            try:
+                x, y = int(parts[1]), int(parts[2])
+                game.click(x, y)
+            except ValueError:
+                continue
+        elif cmd_type == "wait" and len(parts) == 2:
+            try:
+                ms = int(parts[1])
+                game.wait(ms)
+            except ValueError:
+                continue
+        elif command == "print board":
+            game.print_board()
+
+
+if __name__ == "__main__":
+    main()
