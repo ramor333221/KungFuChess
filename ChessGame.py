@@ -8,7 +8,7 @@ class ChessGame:
 
     def __init__(self, board: BoardRepresentation):
         self._board = board
-        self._selected_pos = None
+        self._selected_pos = None  # Tuple (row, col)
         self._game_clock_ms = 0
 
     def print_board(self) -> None:
@@ -43,6 +43,24 @@ class ChessGame:
             self._handle_move_request(from_pos=self._selected_pos, to_pos=(row, col))
             self._selected_pos = None
 
+    def _is_path_clear(self, from_pos: tuple, to_pos: tuple) -> bool:
+        from_row, from_col = from_pos
+        to_row, to_col = to_pos
+
+        step_row = 0 if to_row == from_row else (1 if to_row > from_row else -1)
+        step_col = 0 if to_col == from_col else (1 if to_col > from_col else -1)
+
+        curr_row = from_row + step_row
+        curr_col = from_col + step_col
+
+        while (curr_row, curr_col) != (to_row, to_col):
+            if not self._board.is_empty(curr_row, curr_col):
+                return False
+            curr_row += step_row
+            curr_col += step_col
+
+        return True
+
     def _is_move_legal(self, piece_type: str, from_pos: tuple, to_pos: tuple) -> bool:
         from_row, from_col = from_pos
         to_row, to_col = to_pos
@@ -53,25 +71,39 @@ class ChessGame:
         if d_row == 0 and d_col == 0:
             return False
 
-        if piece_type == "K":  # King
+        if piece_type == "K":
             return d_row <= 1 and d_col <= 1
-        elif piece_type == "R":  # Rook
+        elif piece_type == "R":
             return d_row == 0 or d_col == 0
-        elif piece_type == "B":  # Bishop
+        elif piece_type == "B":
             return d_row == d_col
-        elif piece_type == "Q":  # Queen
+        elif piece_type == "Q":
             return d_row == 0 or d_col == 0 or d_row == d_col
-        elif piece_type == "N":  # Knight
+        elif piece_type == "N":
             return (d_row == 2 and d_col == 1) or (d_row == 1 and d_col == 2)
-        elif piece_type == "P":  # Pawn
+        elif piece_type == "P":
             return True
 
         return False
 
     def _handle_move_request(self, from_pos: tuple, to_pos: tuple) -> None:
         from_row, from_col = from_pos
+        to_row, to_col = to_pos
+
         piece_token = self._board.get_token(from_row, from_col)
+        piece_color = piece_token[0]
         piece_type = piece_token[1]
 
-        if self._is_move_legal(piece_type, from_pos, to_pos):
-            self._board.move_piece(from_row, from_col, to_pos[0], to_pos[1])
+        if not self._board.is_empty(to_row, to_col):
+            target_token = self._board.get_token(to_row, to_col)
+            if target_token[0] == piece_color:
+                return
+
+        if not self._is_move_legal(piece_type, from_pos, to_pos):
+            return
+
+        if piece_type in {"R", "B", "Q"}:
+            if not self._is_path_clear(from_pos, to_pos):
+                return
+
+        self._board.move_piece(from_row, from_col, to_row, to_col)
