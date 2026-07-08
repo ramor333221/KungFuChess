@@ -1,10 +1,11 @@
+# ChessGame.py
 import sys
+import constants
 
 
 class ChessGame:
-    CELL_SIZE = 100
-    VALID_COLORS = {"w", "b"}
-    VALID_PIECES = {"K", "Q", "R", "B", "N", "P"}
+    CELL_SIZE = constants.CELL_SIZE
+    EMPTY_CELL = constants.EMPTY_CELL
 
     def __init__(self, board_grid):
         self.grid = board_grid
@@ -14,6 +15,8 @@ class ChessGame:
         self.selected_pos = None  # Tuple (row, col)
         self.game_clock_ms = 0
         self.pending_movements = []
+
+        self.game_over = False
 
     def print_board(self):
         """Outputs the current board state in its canonical form."""
@@ -28,7 +31,10 @@ class ChessGame:
 
     def click(self, x: int, y: int):
         """Processes a pixel click event, translating coordinates to board cells."""
-        # תמיד נעדכן תנועות לפני עיבוד לחיצה כדי לשחרר את הנעילה אם הזמן עבר
+
+        if self.game_over:
+            return
+
         self._implement_movement()
 
         col = x // self.CELL_SIZE
@@ -38,7 +44,7 @@ class ChessGame:
             return
 
         clicked_token = self.grid[row][col]
-        is_empty = (clicked_token == ".")
+        is_empty = (clicked_token == self.EMPTY_CELL)
 
         if self.selected_pos is None:
             if not is_empty:
@@ -64,7 +70,7 @@ class ChessGame:
         curr_col = from_col + step_col
 
         while (curr_row, curr_col) != (to_row, to_col):
-            if self.grid[curr_row][curr_col] != ".":
+            if self.grid[curr_row][curr_col] != self.EMPTY_CELL:
                 return False
             curr_row += step_row
             curr_col += step_col
@@ -83,34 +89,39 @@ class ChessGame:
         target_token = self.grid[to_row][to_col]
 
         if row_diff == forward_dir and col_diff == 0:
-            return target_token == "."
+            return target_token == self.EMPTY_CELL
 
         if row_diff == forward_dir and abs(col_diff) == 1:
-            return target_token != "."
+            return target_token != self.EMPTY_CELL
 
         return False
 
-    def _is_move_legal(self, piece_type: str, from_pos: tuple, to_pos: tuple) -> bool:
-        """Validates whether a move adheres to geometric path limitations."""
+    def _is_pawn_move_legal(self, color: str, from_pos: tuple, to_pos: tuple) -> bool:
+        """Validates standard single-step, initial double-step pawn logic, and diagonal captures."""
         from_row, from_col = from_pos
         to_row, to_col = to_pos
 
-        d_row = abs(to_row - from_row)
-        d_col = abs(to_col - from_col)
+        forward_dir = -1 if color == "w" else 1
+        start_row = 6 if color == "w" else 1  # התאמה לשורת המקור (לפי גודל לוח סטנדרטי)
 
-        if d_row == 0 and d_col == 0:
-            return False
+        row_diff = to_row - from_row
+        col_diff = to_col - from_col
+        target_token = self.grid[to_row][to_col]
 
-        if piece_type == "K":
-            return d_row <= 1 and d_col <= 1
-        elif piece_type == "R":
-            return d_row == 0 or d_col == 0
-        elif piece_type == "B":
-            return d_row == d_col
-        elif piece_type == "Q":
-            return d_row == 0 or d_col == 0 or d_row == d_col
-        elif piece_type == "N":
-            return (d_row == 2 and d_col == 1) or (d_row == 1 and d_col == 2)
+        # צעד אחד קדימה (רגיל)
+        if row_diff == forward_dir and col_diff == 0:
+            return target_token == self.EMPTY_CELL
+
+        # צעד כפול משורת ההתחלה (חדש!)
+        if from_row == start_row and row_diff == 2 * forward_dir and col_diff == 0:
+            # בודקים שגם משבצת האמצע וגם משבצת היעד ריקות
+            mid_row = from_row + forward_dir
+            return (self.grid[mid_row][from_col] == self.EMPTY_CELL and
+                    target_token == self.EMPTY_CELL)
+
+        # אכילה באלכסון
+        if row_diff == forward_dir and abs(col_diff) == 1:
+            return target_token != self.EMPTY_CELL
 
         return False
 
@@ -120,19 +131,18 @@ class ChessGame:
 
         piece_token = self.grid[from_row][from_col]
 
-        # אם משבצת המקור כבר התרוקנה (למשל כלי כבר בדרך), נתעלם
-        if piece_token == ".":
+        if piece_token == self.EMPTY_CELL:
             return
 
         piece_color = piece_token[0]
         piece_type = piece_token[1]
         target_token = self.grid[to_row][to_col]
 
-        # חסימה גלובלית: מניעת פקודות חדשות אם יש כלי בדרך
+        # חסימה גלובלית בזמן תנועה
         if len(self.pending_movements) > 0:
             return
 
-        if target_token != "." and target_token[0] == piece_color:
+        if target_token != self.EMPTY_CELL and target_token[0] == piece_color:
             return
 
         if piece_type == "P":
@@ -146,7 +156,7 @@ class ChessGame:
                 if not self._is_path_clear(from_pos, to_pos):
                     return
 
-        arrival = self.game_clock_ms + 1000
+        arrival = self.game_clock_ms + constants.MOVEMENT_DURATION_MS
         self.pending_movements.append({
             "from": from_pos,
             "to": to_pos,
@@ -154,100 +164,33 @@ class ChessGame:
             "arrival_time": arrival
         })
 
-        # מוחקים מיד את הכלי ממשבצת המקור כדי שלא יהיה ניתן להזיז אותו שוב בטעות בזמן הטיסה
-        self.grid[from_row][from_col] = "."
+        self.grid[from_row][from_col] = self.EMPTY_CELL
 
     def _implement_movement(self):
+        """מקדמת ומחילה את התנועות שהגיעו ליעדן בשעון הנוכחי."""
         still_traveling = []
 
         for movement in self.pending_movements:
-            # הכלים מגיעים רשמית ליעד בזמן >= (למשל אחרי wait 1000)
             if self.game_clock_ms >= movement["arrival_time"]:
                 to_row, to_col = movement["to"]
-                self.grid[to_row][to_col] = movement["piece"]
+                piece = movement["piece"]  # למשל 'wP'
+
+                # 1. בדיקת Game Over (מהשלב הקודם)
+                target_piece = self.grid[to_row][to_col]
+                if len(target_piece) == 2 and target_piece[1] == "K":
+                    self.game_over = True
+
+                # 2. בדיקת הכתרה (חדש!)
+                piece_color = piece[0]
+                piece_type = piece[1]
+                last_row = 0 if piece_color == "w" else (self.height - 1)
+
+                if piece_type == "P" and to_row == last_row:
+                    piece = f"{piece_color}Q"  # החייל מוכתר למלכה!
+
+                # החלת התנועה על הלוח
+                self.grid[to_row][to_col] = piece
             else:
                 still_traveling.append(movement)
 
         self.pending_movements = still_traveling
-
-
-class CommandParser:
-    @staticmethod
-    def parse_initial_input():
-        lines = [line.strip() for line in sys.stdin]
-        board_rows = []
-        command_lines = []
-
-        is_board_section = False
-        is_command_section = False
-
-        for line in lines:
-            if not line:
-                continue
-            if line.startswith("Board:"):
-                is_board_section = True
-                continue
-            if line.startswith("Commands:"):
-                is_board_section = False
-                is_command_section = True
-                continue
-
-            if is_board_section:
-                tokens = line.split()
-                if tokens:
-                    board_rows.append(tokens)
-            elif is_command_section:
-                command_lines.append(line)
-
-        return board_rows, command_lines
-
-    @staticmethod
-    def validate_board(board_rows) -> bool:
-        if not board_rows:
-            return False
-        expected_width = len(board_rows[0])
-        for row in board_rows:
-            if len(row) != expected_width:
-                print("ERROR ROW_WIDTH_MISMATCH")
-                return False
-            for token in row:
-                if token == ".":
-                    continue
-                if len(token) != 2 or token[0] not in ChessGame.VALID_COLORS or token[1] not in ChessGame.VALID_PIECES:
-                    print("ERROR UNKNOWN_TOKEN")
-                    return False
-        return True
-
-
-def main():
-    board_rows, command_lines = CommandParser.parse_initial_input()
-    if not CommandParser.validate_board(board_rows):
-        return
-
-    game = ChessGame(board_rows)
-
-    for command in command_lines:
-        parts = command.split()
-        if not parts:
-            continue
-
-        cmd_type = parts[0]
-
-        if cmd_type == "click" and len(parts) == 3:
-            try:
-                x, y = int(parts[1]), int(parts[2])
-                game.click(x, y)
-            except ValueError:
-                continue
-        elif cmd_type == "wait" and len(parts) == 2:
-            try:
-                ms = int(parts[1])
-                game.wait(ms)
-            except ValueError:
-                continue
-        elif command == "print board":
-            game.print_board()
-
-
-if __name__ == "__main__":
-    main()

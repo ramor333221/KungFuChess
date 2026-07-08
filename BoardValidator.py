@@ -1,13 +1,15 @@
 from typing import List, Set, Optional
+
+import constants
 from BoardRepresentation import BoardRepresentation
 from ChessGame import ChessGame
 
-EMPTY_CELL = "."
+
 
 class BoardValidator:
     def __init__(self, valid_colors: Set[str] = None, valid_pieces: Set[str] = None):
-        self.valid_colors = valid_colors or ChessGame.VALID_COLORS
-        self.valid_pieces = valid_pieces or ChessGame.VALID_PIECES
+        self.valid_colors = valid_colors or constants.VALID_COLORS
+        self.valid_pieces = valid_pieces or constants.VALID_PIECES
 
     def validate(self, raw_rows: List[List[str]]) -> Optional[BoardRepresentation]:
         if not raw_rows or not raw_rows[0]:
@@ -20,7 +22,7 @@ class BoardValidator:
                 print("ERROR ROW_WIDTH_MISMATCH")
                 return None
             for token in row:
-                if token == EMPTY_CELL:
+                if token == constants.EMPTY_CELL:
                     continue
                 if (len(token) != 2 or
                         token[0] not in self.valid_colors or

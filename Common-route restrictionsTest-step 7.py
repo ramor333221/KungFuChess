@@ -1,4 +1,6 @@
 import unittest
+
+import constants
 from ChessGame import ChessGame
 
 
@@ -45,7 +47,7 @@ class TestMovementInterruptionAndCooldown(unittest.TestCase):
         game.click(250, 50)
 
         # המתנה של 1000ms מלאים - הצריח משלים הגעה
-        game.wait(1000)
+        game.wait(constants.MOVEMENT_DURATION_MS)
 
         # הדפסת הלוח או הרצת הלוגיקה הפנימית כדי לוודא נחיתה
         game._implement_movement()
@@ -55,7 +57,7 @@ class TestMovementInterruptionAndCooldown(unittest.TestCase):
         game.click(250, 250)
 
         # נחכה עוד 1000ms עבור התנועה השנייה
-        game.wait(1000)
+        game.wait(constants.MOVEMENT_DURATION_MS)
 
         # מוודאים שהצריח הגיע בהצלחה ליעד השני
         self.assertEqual(game.grid[2][2], "wR")

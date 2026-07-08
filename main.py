@@ -15,9 +15,7 @@ def main():
     if not board_representation:
         return
 
-    raw_grid = board_representation._matrix
-
-    # כעת נעביר את המטריצה הגולמית ל-ChessGame כפי שהוא מצפה לקבל
+    raw_grid = getattr(board_representation, 'matrix', getattr(board_representation, '_matrix', None))
     game = ChessGame(raw_grid)
 
     for command in command_lines:

@@ -1,8 +1,8 @@
 import sys
 from typing import List, Tuple
+import constants
 
-BOARD_HEADER = "Board:"
-COMMANDS_HEADER = "Commands:"
+
 
 
 class BoardParser:
@@ -20,11 +20,11 @@ class BoardParser:
             line = line.strip()
             if not line:
                 continue
-            if line.startswith(BOARD_HEADER):
+            if line.startswith(constants.BOARD_HEADER):
                 is_board_section = True
                 is_command_section = False
                 continue
-            if line.startswith(COMMANDS_HEADER):
+            if line.startswith(constants.COMMANDS_HEADER):
                 is_board_section = False
                 is_command_section = True
                 continue
