@@ -1,3 +1,5 @@
+# https://github.com/ramor333221/KungFuChess
+
 import sys
 from BoardParser import BoardParser
 from BoardValidator import BoardValidator
@@ -9,11 +11,14 @@ def main():
     raw_rows, command_lines = parser.parse_input()
 
     validator = BoardValidator()
-    board = validator.validate(raw_rows)
-    if not board:
+    board_representation = validator.validate(raw_rows)
+    if not board_representation:
         return
 
-    game = ChessGame(board)
+    raw_grid = board_representation._matrix
+
+    # כעת נעביר את המטריצה הגולמית ל-ChessGame כפי שהוא מצפה לקבל
+    game = ChessGame(raw_grid)
 
     for command in command_lines:
         parts = command.split()
@@ -29,14 +34,12 @@ def main():
                 game.click(x, y)
             except ValueError:
                 continue
-
         elif cmd_type == "wait" and len(parts) == 2:
             try:
                 ms = int(parts[1])
                 game.wait(ms)
             except ValueError:
                 continue
-
         elif command == "print board":
             game.print_board()
 
