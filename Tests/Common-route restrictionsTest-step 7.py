@@ -1,6 +1,6 @@
 import unittest
 
-import constants
+from config import constants
 from ChessGame import ChessGame
 
 
