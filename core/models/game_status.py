@@ -51,7 +51,13 @@ class GameStatus:
     moved_pieces: Set[Tuple[int, int]] = field(default_factory=set)
     current_turn: int = constants.PLAYER_WHITE
     scores: Dict[int, int] = field(default_factory=lambda: {constants.PLAYER_WHITE: 0, constants.PLAYER_BLACK: 0})
-    command_history: List[str] = field(default_factory=list)
+    command_history: Dict[int, List[str]] = field(default_factory=lambda: {
+        constants.PLAYER_WHITE: [],
+        constants.PLAYER_BLACK: []
+    })
+
+    def add_history(self, player_id: int, command: str):
+        self.command_history[player_id].append(command)
 
     @property
     def selected_pos(self) -> Optional[Tuple[int, int]]:
@@ -70,8 +76,6 @@ class GameStatus:
     def update_score(self, player_id: int, points: int):
         self.scores[player_id] += points
 
-    def add_history(self, command: str):
-        self.command_history.append(command)
 
 
 

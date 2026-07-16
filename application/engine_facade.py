@@ -25,9 +25,10 @@ class EngineFacade:
         if not parts:
             return None
 
+        player_id = self._runner.status.current_turn
         command = parts[0]
         args = parts[1:]
-        print(f"Executing: {command} with args: {args}")  # Debugging
+        self._runner.status.add_history(player_id, command_str)
         return self._runner.interaction_ctrl.execute_command(command, args)
 
     def get_board_data(self):
@@ -45,6 +46,15 @@ class EngineFacade:
         if hasattr(self._runner, 'status'):
             return self._runner.status.game_over
         return False
+
+    def switch_player_turn(self):
+        """
+        Public interface to handle turn switching.
+        Ensures consistent state management when turns change.
+        """
+        self._runner.status.selected_pos = None
+        self._runner.status.switch_turn()
+        print(f"EngineFacade: Turn switched to {self._runner.status.current_turn}")
 
     def reset_game(self):
         # 1. Reset Status and Turn

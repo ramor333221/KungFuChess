@@ -20,7 +20,7 @@ class BoardController:
 
         self.input_handler = InputHandler(
             facade=facade,
-            button_zone=self.button_zone,
+            renderer=self.renderer,
             on_board_click=self.handle_click
         )
 
@@ -108,6 +108,18 @@ class BoardController:
         last_time = cv2.getTickCount()
 
         while True:
+            # All lines inside the while loop must be indented by 12 spaces
+            # (or 3 tabs) relative to the start of the file
+            key = cv2.waitKey(1) & 0xFF
+
+            if key == 14:  # Ctrl+N
+                print("New Game triggered via Ctrl+N")
+                self.facade.reset_game()
+                self.selected_square = None
+
+            if key == ord('q'):
+                break
+
             now = cv2.getTickCount()
             delta_ms = int((now - last_time) * 1000 / cv2.getTickFrequency())
             last_time = now
@@ -120,5 +132,5 @@ class BoardController:
                 self.selected_square
             )
 
+            # This line must be aligned with the lines above it inside the while loop
             cv2.imshow("Main Board", canvas)
-            if cv2.waitKey(1) == ord('q'): break

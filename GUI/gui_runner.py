@@ -8,3 +8,4 @@ if __name__ == "__main__":
     facade_instance = EngineFacade(board_path)
     controller = BoardController(facade_instance, board_path)
     controller.run()
+

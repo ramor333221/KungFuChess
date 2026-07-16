@@ -35,5 +35,5 @@ VALID_PIECES: Set[str] = {"K", "Q", "R", "B", "N", "P"}
 BOARD_HEADER: str = "Board:"
 COMMANDS_HEADER: str = "Commands:"
 
-PLAYER_WHITE=1
-PLAYER_BLACK = 2
+PLAYER_WHITE=0
+PLAYER_BLACK = 1
