@@ -4,7 +4,10 @@ from typing import Set
 # UI & DISPLAY CONFIGURATIONS
 # ==============================================================================
 # Pixel dimensions for board grid cells (Used by BoardMapper and Controller)
-CELL_SIZE: int = 100
+GRID_SIZE = 8
+CELL_SIZE = 80
+HALF_CELL = CELL_SIZE // 2
+SQUARE_PADDING = 3
 
 
 # ==============================================================================
@@ -31,3 +34,6 @@ VALID_PIECES: Set[str] = {"K", "Q", "R", "B", "N", "P"}
 # Headers for parsing input streams (Used by BoardParser)
 BOARD_HEADER: str = "Board:"
 COMMANDS_HEADER: str = "Commands:"
+
+PLAYER_WHITE=1
+PLAYER_BLACK = 2

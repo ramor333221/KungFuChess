@@ -1,4 +1,4 @@
-from GUI.controllers.board_controller import BoardController
+from GUI.ui.board_controller import BoardController
 from application.engine_facade import EngineFacade
 
 

@@ -62,3 +62,16 @@ class MovementController:
         """
         self.status.selected_pos = None
         self.is_airborne = False
+
+    def get_legal_moves(self, row, col):
+        legal_moves = []
+        piece_token = self.board.matrix[row][col]
+
+        for r in range(8):
+            for c in range(8):
+                try:
+                    if self.rules.is_move_legal(self.board.matrix, [], piece_token, (row, col), (r, c)):
+                        legal_moves.append((r, c))
+                except Exception:
+                    continue
+        return legal_moves

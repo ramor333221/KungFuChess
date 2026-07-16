@@ -57,21 +57,27 @@ class PawnRule(PieceRule):
     Implements specific movement and capture validation logic for Pawn pieces.
     """
     def is_legal(self, matrix, from_pos, to_pos, is_airborne=False, color="w", moved_pieces=None):
+        color = color.lower()
         r1, c1 = from_pos
         r2, c2 = to_pos
         fwd = -1 if color == "w" else 1
         dr, dc = r2 - r1, c2 - c1
 
+        def is_empty(r, c):
+            val = matrix[r][c]
+            return val is None or val == constants.EMPTY_CELL
+
         if dr == fwd and dc == 0:
-            return matrix[r2][c2] == constants.EMPTY_CELL
+            return is_empty(r2, c2)
 
         if dr == 2 * fwd and dc == 0:
             start_row = (len(matrix) - 2) if color == "w" else 1
             return (r1 == start_row and
-                    matrix[r1 + fwd][c1] == constants.EMPTY_CELL and
-                    matrix[r2][c2] == constants.EMPTY_CELL)
+                    is_empty(r1 + fwd, c1) and
+                    is_empty(r2, c2))
 
         if dr == fwd and abs(dc) == 1:
-            return matrix[r2][c2] != constants.EMPTY_CELL and matrix[r2][c2][0] != color
+            val = matrix[r2][c2]
+            return val is not None and val != constants.EMPTY_CELL and val[0].lower() != color
 
         return False

@@ -1,36 +1,47 @@
-# application/engine_facade.py
 from core.game_runner import GameRunner
 from utils.BoardFactory import BoardFactory
 from utils.board_mapper import BoardMapper
-# Import your new factory
+from utils.img import Img
 
 
 class EngineFacade:
-    def __init__(self, board_matrix=None):
+    def __init__(self, board_path, board_matrix=None):
         self._runner = GameRunner()
-        self.mapper = BoardMapper()
 
-        # 1. Resolve the matrix using the factory if none provided
+        # 1. Load the board image
+        self.board_base = Img().read(board_path)
+
+        # 2. Initialize the mapper using the image
+        self.mapper = BoardMapper(self.board_base.img)
+
         if board_matrix is None:
             board_matrix = BoardFactory.get_default_layout()
 
-        # 2. Run the game initialization with the matrix
         self._runner.run_game(board_matrix, [])
 
     def process_move(self, command_str):
-        parts = command_str.split()  # ["click", "row", "col"]
-        command = parts[0]  # "click"
-        args = parts[1:]  # ["row", "col"]
+        parts = command_str.split()
+        if not parts:
+            return None
 
+        command = parts[0]
+        args = parts[1:]
+        print(f"Executing: {command} with args: {args}")  # Debugging
         return self._runner.interaction_ctrl.execute_command(command, args)
 
     def get_board_data(self):
-        """Returns the board matrix for the GUI to render."""
         if hasattr(self._runner, 'board') and self._runner.board is not None:
             return self._runner.board.matrix
-        # Return an empty 8x8 matrix if board not initialized
         return [[None for _ in range(8)] for _ in range(8)]
 
-    def handle_gui_click(self, x, y):
-        row, col = self.mapper.pixel_to_grid(x, y)
-        self._runner.interaction_ctrl.execute_command("click", [row, col])
+    def get_valid_moves(self, row, col):
+        """Delegates directly to the Runner."""
+        return self._runner.get_possible_moves(row, col)
+
+    # application/engine_facade.py
+
+    def get_game_over_status(self):
+        """Returns True if the game is over, False otherwise."""
+        if hasattr(self._runner, 'status'):
+            return self._runner.status.game_over
+        return False

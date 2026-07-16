@@ -1,4 +1,3 @@
-# application/board_factory.py
 class BoardFactory:
     @staticmethod
     def get_default_layout():

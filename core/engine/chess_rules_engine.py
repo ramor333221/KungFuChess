@@ -54,5 +54,8 @@ class ChessRulesEngine:
             raise MovementError("Target position is out of board bounds.")
 
         target = matrix[to_pos[0]][to_pos[1]]
-        if target != constants.EMPTY_CELL and target[0] == piece_token[0]:
-            raise MovementError("Cannot capture your own piece.")
+
+        if target is not None and target != constants.EMPTY_CELL:
+            # Now it is safe to check the color
+            if target[0] == piece_token[0]:
+                raise MovementError("Cannot capture your own piece.")

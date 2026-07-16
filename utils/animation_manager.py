@@ -17,8 +17,13 @@ class AnimationManager:
         self.fps = self.config["graphics"]["frames_per_sec"]
 
     def get_current_frame(self, current_time):
+        speed_factor = 2.0
+        frame_duration = (1000.0 / self.fps) * speed_factor
+
         elapsed = current_time - self.last_update
-        if elapsed > (1.0 / self.fps):
-            self.current_frame = (self.current_frame + 1) % 5
+
+        if elapsed > frame_duration:
+            self.current_frame = (self.current_frame + 1) % len(self.frames)
             self.last_update = current_time
+
         return self.frames[self.current_frame]

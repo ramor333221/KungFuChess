@@ -18,7 +18,8 @@ class InteractionController:
             "click": self._handle_click,
             "jump": self._handle_jump,
             "wait": self._handle_wait,
-            "print": self._handle_print
+            "print": self._handle_print,
+            "switch_turn": self._handle_switch_turn
         }
 
     def execute_command(self, action: str, args: list):
@@ -57,3 +58,8 @@ class InteractionController:
 
     def _handle_print(self, args: List[str]):
         BoardPrinter.print_board(self.board.matrix)
+
+    def _handle_switch_turn(self, args: List[str]):
+        """Toggles the current turn between 0 and 1."""
+        self.status.current_turn = 1 - self.status.current_turn
+        print(f"Turn switched to: {self.status.current_turn}")
