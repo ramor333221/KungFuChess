@@ -31,17 +31,39 @@ class InteractionController:
                 self.status.selected_pos = None
 
     def _handle_click(self, args):
-        row, col = int(args[0]), int(args[1])
-
-        if not (0 <= row < self.board.height and 0 <= col < self.board.width):
+        """
+        Processes click input.
+        Supports 2 arguments (row, col) for selection,
+        or 4 arguments (r1, c1, r2, c2) for a full move command.
+        """
+        if len(args) == 4:
+            src = (int(args[0]), int(args[1]))
+            dst = (int(args[2]), int(args[3]))
+            self.movement.execute_move(src, dst)
+            self.status.selected_pos = None
             return
 
-        if self.status.selected_pos is None:
-            if self.board.get_token(row, col) != constants.EMPTY_CELL:
-                self.status.selected_pos = (row, col)
-        else:
-            self.movement.execute_move(self.status.selected_pos, (row, col))
-            self.status.selected_pos = None
+        if len(args) == 2:
+            row, col = int(args[0]), int(args[1])
+
+            if not (0 <= row < self.board.height and 0 <= col < self.board.width):
+                print("DEBUG: Click out of bounds")
+                return
+
+            if self.status.selected_pos is None:
+                token = self.board.get_token(row, col)
+                if token != constants.EMPTY_CELL:
+                    self.status.selected_pos = (row, col)
+                else:
+                    print("DEBUG: Clicked empty cell")
+            else:
+                self.movement.execute_move(self.status.selected_pos, (row, col))
+                self.status.selected_pos = None
+
+    def _is_same_color(self, pos1, pos2):
+        token1 = self.board.get_token(pos1[0], pos1[1])
+        token2 = self.board.get_token(pos2[0], pos2[1])
+        return token1[0] == token2[0]
 
     def _handle_jump(self, args: List[str]):
         try:

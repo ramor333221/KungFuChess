@@ -71,7 +71,9 @@ class GameStatusManager:
         r_t, c_t = int(to_pos[0]), int(to_pos[1])
 
         target = self._board.get_token(r_t, c_t)
-        if target != constants.EMPTY_CELL:
+
+        # Check if target is not None and not empty before comparing
+        if target and target != constants.EMPTY_CELL:
             if target[0] == token[0]:
                 raise MovementError(f"Landing blocked by piece at {to_pos}")
             if target[1] == "K":

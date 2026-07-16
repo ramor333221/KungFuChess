@@ -32,33 +32,33 @@ class BoardController:
         board_matrix = self.facade.get_board_data()
         token = board_matrix[row][col]
 
-        # Always fetch the LATEST turn from the facade
         turn_id = self.facade._runner.status.current_turn
         turn_map = {0: "W", 1: "B"}
         current_turn_str = turn_map.get(turn_id, "")
 
         if self.selected_square is None:
-            # SELECTION LOGIC
             if token and token != constants.EMPTY_CELL and isinstance(token, str):
                 if current_turn_str in token:
                     self.selected_square = (row, col)
-                    print(f"Piece selected: {token}")
                 else:
-                    print(f"Not your piece! Current turn is {current_turn_str}")
-        else:
-            # MOVE LOGIC
-            # Re-verify it is still the correct turn before moving
-            if token and isinstance(token, str) and current_turn_str in token:
-                # If we clicked another one of our own pieces, switch selection
-                self.selected_square = (row, col)
-            else:
-                # Actually move
-                move_cmd = f"click {self.selected_square[0]} {self.selected_square[1]} {row} {col}"
-                print(f"Attempting move: {move_cmd}")
+                    print("Not your piece!")
+            return
 
-                # Check if the move execution was successful
-                success = self.facade.process_move(move_cmd)
-                self.selected_square = None
+        valid_moves = self.facade.get_valid_moves(self.selected_square[0], self.selected_square[1])
+
+        if valid_moves and (row, col) in valid_moves:
+            move_cmd = f"click {self.selected_square[0]} {self.selected_square[1]} {row} {col}"
+            self.facade.process_move(move_cmd)
+            self.selected_square = None
+            print(f"Moved to {row}, {col}")
+
+        elif token and isinstance(token, str) and current_turn_str in token:
+            self.selected_square = (row, col)
+            print("Piece re-selected")
+
+        else:
+            self.selected_square = None
+            print("Selection cancelled")
 
     def _load_animations(self):
         base_path = Path(__file__).resolve().parent.parent.parent / "piece_mine"
@@ -72,8 +72,20 @@ class BoardController:
                     self.piece_animations[folder.name] = manager
 
     def run(self):
+        last_time = cv2.getTickCount()
+
         while True:
-            canvas = self.renderer.render(self.board_base.img, self.piece_animations, self.selected_square)
+            now = cv2.getTickCount()
+            delta_ms = int((now - last_time) * 1000 / cv2.getTickFrequency())
+            last_time = now
+
+            self.facade._runner.interaction_ctrl.manager.process_time_tick(delta_ms)
+
+            canvas = self.renderer.render(
+                self.board_base.img,
+                self.piece_animations,
+                self.selected_square
+            )
+
             cv2.imshow("Main Board", canvas)
             if cv2.waitKey(1) == ord('q'): break
-        cv2.destroyAllWindows()

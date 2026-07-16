@@ -43,16 +43,32 @@ class MovementController:
         self.is_airborne = True
 
     def execute_move(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]):
-        """
-        Validates the legality of a move and dispatches it to the movement manager.
-        """
         token = self.board.get_token(*from_pos)
-        
-        if self.rules.is_move_legal(self.board.matrix, self.status.moved_pieces, token, from_pos, to_pos, self.is_airborne):
+
+        if self.rules.is_move_legal(
+                self.board.matrix,
+                self.status.moved_pieces,
+                token,
+                from_pos,
+                to_pos,
+                self.is_airborne
+        ):
+            if not hasattr(self.status, 'piece_states'):
+                self.status.piece_states = {}
+
+            self.status.piece_states[from_pos] = "move"
+
             if self.is_airborne:
                 self.manager.add_airborne_movement(from_pos, to_pos, token)
             else:
                 self.manager.add_linear_movement(from_pos, to_pos, token)
+
+            self.status.piece_states[to_pos] = "long_rest"
+
+            if from_pos in self.status.piece_states:
+                del self.status.piece_states[from_pos]
+
+            self.is_airborne = False
         else:
             raise MovementError(f"Illegal move from {from_pos} to {to_pos}.")
             

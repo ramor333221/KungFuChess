@@ -1,5 +1,6 @@
 # models/game_status.py
 import heapq
+import time
 from dataclasses import dataclass, field
 from typing import List, Tuple, Dict, Set, Optional
 
@@ -43,15 +44,12 @@ class GameChronology:
 
 @dataclass
 class GameStatus:
+    start_time: int = field(default_factory=lambda: int(time.time() * 1000))
     game_clock_ms: int = 0
     game_over: bool = False
     _selected_pos: Optional[Tuple[int, int]] = None
     moved_pieces: Set[Tuple[int, int]] = field(default_factory=set)
-
-    # Track turn using constants
     current_turn: int = constants.PLAYER_WHITE
-
-    # New tracking fields
     scores: Dict[int, int] = field(default_factory=lambda: {constants.PLAYER_WHITE: 0, constants.PLAYER_BLACK: 0})
     command_history: List[str] = field(default_factory=list)
 
