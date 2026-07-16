@@ -48,7 +48,6 @@ class GameStatusManager:
             self._land_piece(session.from_pos, pos, session.movement.piece_token)
 
     def add_linear_movement(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int], token: str) -> None:
-        # FIX: Search chronology instead of status
         for move in self._chronology.pending_movements:
             if move.from_pos == from_pos:
                 move.to_pos = to_pos
@@ -60,32 +59,35 @@ class GameStatusManager:
         heapq.heappush(self._chronology.pending_movements, PendingMovement(arrival, from_pos, to_pos, token))
         self._status.moved_pieces.add(from_pos)
 
-
-
-    def _land_piece(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int], token: str) -> None:
+    def _land_piece(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int], piece_token: str):
         """
-        Executes the final placement of a piece on the board, handling
-        captures and promotions. Raises exceptions instead of silently returning.
+        Finalizes the movement and ensures board matrix and piece states are in sync.
         """
-        r_f, c_f = int(from_pos[0]), int(from_pos[1])
-        r_t, c_t = int(to_pos[0]), int(to_pos[1])
+        # 1. Access the matrix and status using the correct internal attributes
+        # (Assuming your __init__ uses self._board and self._status)
+        matrix = self._board.matrix
+        status = self._status
 
-        target = self._board.get_token(r_t, c_t)
+        # 2. Safety Bounds Check
+        if not (0 <= to_pos[0] < constants.GRID_SIZE and 0 <= to_pos[1] < constants.GRID_SIZE):
+            print(f"CRITICAL: Land attempt out of bounds: {to_pos}")
+            return
 
-        # Check if target is not None and not empty before comparing
-        if target and target != constants.EMPTY_CELL:
-            if target[0] == token[0]:
-                raise MovementError(f"Landing blocked by piece at {to_pos}")
-            if target[1] == "K":
-                self._status.game_over = True
+        # 3. Update the Board Matrix
+        matrix[from_pos[0]][from_pos[1]] = constants.EMPTY_CELL
+        matrix[to_pos[0]][to_pos[1]] = piece_token
 
-        final_token = token
-        if token[1] == "P" and (r_t == 0 or r_t == self._board.height - 1):
-            final_token = f"{token[0]}Q"
+        # 4. Synchronize Piece States using the correct '_status' attribute
+        # We check the internal attribute '_status'
+        if hasattr(status, 'piece_states'):
+            # Clear old state
+            if from_pos in status.piece_states:
+                del status.piece_states[from_pos]
 
-        self._board.clear_cell(r_f, c_f)
-        self._board.set_token(r_t, c_t, final_token)
-        self._status.moved_pieces.discard(from_pos)
+            # Set new state
+            status.piece_states[to_pos] = "idle"
+
+        print(f"Successfully landed {piece_token} at {to_pos}.")
 
     def _calculate_duration(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> int:
         """

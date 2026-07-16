@@ -44,6 +44,7 @@ class MovementController:
 
     def execute_move(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]):
         token = self.board.get_token(*from_pos)
+        target_token = self.board.get_token(*to_pos)  # Get current occupant
 
         if self.rules.is_move_legal(
                 self.board.matrix,
@@ -53,24 +54,66 @@ class MovementController:
                 to_pos,
                 self.is_airborne
         ):
+            # 1. Scoring & Capture Logic
+            if target_token and target_token != constants.EMPTY_CELL:
+                points = 1 if 'P' in target_token else (3 if 'Q' in target_token else 2)
+                self.status.update_score(self.status.current_turn, points)
+
+                # Check King
+                if 'K' in target_token:
+                    self.status.game_over = True
+
+            # 2. Update Board Matrix (CRITICAL: Move the piece in the data)
+            self.board.matrix[to_pos[0]][to_pos[1]] = token
+            self.board.matrix[from_pos[0]][from_pos[1]] = constants.EMPTY_CELL
+
+            # 3. Handle States
             if not hasattr(self.status, 'piece_states'):
                 self.status.piece_states = {}
 
-            self.status.piece_states[from_pos] = "move"
+            self.status.piece_states[to_pos] = "long_rest"
+            if from_pos in self.status.piece_states:
+                del self.status.piece_states[from_pos]
 
+            # 4. Movement Execution
             if self.is_airborne:
                 self.manager.add_airborne_movement(from_pos, to_pos, token)
             else:
                 self.manager.add_linear_movement(from_pos, to_pos, token)
 
-            self.status.piece_states[to_pos] = "long_rest"
-
-            if from_pos in self.status.piece_states:
-                del self.status.piece_states[from_pos]
-
             self.is_airborne = False
+            self.status.moved_pieces.add(to_pos)
         else:
             raise MovementError(f"Illegal move from {from_pos} to {to_pos}.")
+
+    def get_legal_moves(self, row, col):
+        legal_moves = []
+        piece_token = self.board.matrix[row][col]
+        piece_color = piece_token[0]
+
+        for r in range(constants.GRID_SIZE):
+            for c in range(constants.GRID_SIZE):
+                target_token = self.board.matrix[r][c]
+
+                if target_token and target_token != constants.EMPTY_CELL:
+                    if target_token[0] == piece_color:
+                        continue
+
+                try:
+                    if self.rules.is_move_legal(
+                            self.board.matrix,
+                            self.status.moved_pieces,
+                            piece_token,
+                            (row, col),
+                            (r, c),
+                            self.is_airborne
+                    ):
+                        legal_moves.append((r, c))
+                except MovementError:
+                    continue
+                except Exception:
+                    continue
+        return legal_moves
             
     def reset_selection(self):
         """
@@ -78,16 +121,3 @@ class MovementController:
         """
         self.status.selected_pos = None
         self.is_airborne = False
-
-    def get_legal_moves(self, row, col):
-        legal_moves = []
-        piece_token = self.board.matrix[row][col]
-
-        for r in range(8):
-            for c in range(8):
-                try:
-                    if self.rules.is_move_legal(self.board.matrix, [], piece_token, (row, col), (r, c)):
-                        legal_moves.append((r, c))
-                except Exception:
-                    continue
-        return legal_moves
