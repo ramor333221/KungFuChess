@@ -61,33 +61,28 @@ class GameStatusManager:
 
     def _land_piece(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int], piece_token: str):
         """
-        Finalizes the movement and ensures board matrix and piece states are in sync.
+        Finalizes movement, handles King captures, and keeps states in sync.
         """
-        # 1. Access the matrix and status using the correct internal attributes
-        # (Assuming your __init__ uses self._board and self._status)
         matrix = self._board.matrix
         status = self._status
 
-        # 2. Safety Bounds Check
         if not (0 <= to_pos[0] < constants.GRID_SIZE and 0 <= to_pos[1] < constants.GRID_SIZE):
             print(f"CRITICAL: Land attempt out of bounds: {to_pos}")
             return
 
-        # 3. Update the Board Matrix
+        target_token = matrix[to_pos[0]][to_pos[1]]
+        if target_token and "K" in target_token:
+            status.game_over = True
+            status.winner = "White" if "W" in piece_token else "Black"
+            print(f"GAME OVER! {status.winner} wins by capturing {target_token}")
+
         matrix[from_pos[0]][from_pos[1]] = constants.EMPTY_CELL
         matrix[to_pos[0]][to_pos[1]] = piece_token
 
-        # 4. Synchronize Piece States using the correct '_status' attribute
-        # We check the internal attribute '_status'
         if hasattr(status, 'piece_states'):
-            # Clear old state
             if from_pos in status.piece_states:
                 del status.piece_states[from_pos]
-
-            # Set new state
             status.piece_states[to_pos] = "idle"
-
-        print(f"Successfully landed {piece_token} at {to_pos}.")
 
     def _calculate_duration(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]) -> int:
         """

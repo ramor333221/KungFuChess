@@ -44,7 +44,7 @@ class MovementController:
 
     def execute_move(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]):
         token = self.board.get_token(*from_pos)
-        target_token = self.board.get_token(*to_pos)  # Get current occupant
+        target_token = self.board.get_token(*to_pos)
 
         if self.rules.is_move_legal(
                 self.board.matrix,
@@ -59,15 +59,7 @@ class MovementController:
                 points = 1 if 'P' in target_token else (3 if 'Q' in target_token else 2)
                 self.status.update_score(self.status.current_turn, points)
 
-                # Check King
-                if 'K' in target_token:
-                    self.status.game_over = True
 
-            # 2. Update Board Matrix (CRITICAL: Move the piece in the data)
-            self.board.matrix[to_pos[0]][to_pos[1]] = token
-            self.board.matrix[from_pos[0]][from_pos[1]] = constants.EMPTY_CELL
-
-            # 3. Handle States
             if not hasattr(self.status, 'piece_states'):
                 self.status.piece_states = {}
 
@@ -75,7 +67,6 @@ class MovementController:
             if from_pos in self.status.piece_states:
                 del self.status.piece_states[from_pos]
 
-            # 4. Movement Execution
             if self.is_airborne:
                 self.manager.add_airborne_movement(from_pos, to_pos, token)
             else:

@@ -71,6 +71,39 @@ class BoardController:
                         frame.img = cv2.resize(frame.img, (size, size), interpolation=cv2.INTER_AREA)
                     self.piece_animations[folder.name] = manager
 
+    def handle_mouse_click(self, x: int, y: int):
+        """
+        Handles mouse input, distinguishing between gameplay moves
+        and UI interactions (like the 'New Game' button).
+        """
+        status = self.facade._runner.status
+
+        # --- 1. GAME OVER UI INTERACTION ---
+        if status.game_over:
+            # Check if click is inside the "New Game" button area
+            # Adjust these coordinates (x, y, w, h) to match your UI layout
+            button_x, button_y, button_w, button_h = 250, 500, 300, 100
+
+            if button_x <= x <= (button_x + button_w) and \
+                    button_y <= y <= (button_y + button_h):
+                print("DEBUG: New Game button clicked.")
+                self.facade.reset_game()
+                return  # Stop processing clicks while game is resetting
+            return  # Ignore board clicks when the game is over
+
+        # --- 2. REGULAR GAMEPLAY MOVEMENT ---
+        # Map pixel coordinates (x, y) to grid coordinates (row, col)
+        # This mapping depends on your board's cell size and offsets
+        row = y // constants.CELL_SIZE
+        col = x // constants.CELL_SIZE
+
+        # Ensure click is within grid bounds
+        if 0 <= row < constants.GRID_SIZE and 0 <= col < constants.GRID_SIZE:
+            # Your existing logic to handle selecting and moving pieces
+            self.process_board_click(row, col)
+        else:
+            print(f"DEBUG: Clicked outside the board at ({x}, {y})")
+
     def run(self):
         last_time = cv2.getTickCount()
 
