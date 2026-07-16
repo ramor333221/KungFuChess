@@ -9,10 +9,7 @@ class EngineFacade:
     def __init__(self, board_path, board_matrix=None):
         self._runner = GameRunner()
         self._board = board_matrix
-        # 1. Load the board image
         self.board_base = Img().read(board_path)
-
-        # 2. Initialize the mapper using the image
         self.mapper = BoardMapper(self.board_base.img)
 
         if board_matrix is None:
@@ -57,19 +54,16 @@ class EngineFacade:
         print(f"EngineFacade: Turn switched to {self._runner.status.current_turn}")
 
     def reset_game(self):
-        # 1. Reset Status and Turn
         self._runner.status.game_over = False
         self._runner.status.winner = None
         self._runner.status.current_turn = constants.PLAYER_WHITE
         self._runner.status.game_clock_ms = 0
 
-        # 2. Reset Scores to 0
         self._runner.status.scores = {
             constants.PLAYER_WHITE: 0,
             constants.PLAYER_BLACK: 0
         }
 
-        # 3. Wipe and Repopulate the Board Matrix
         board_obj = self._runner.board
         if board_obj:
             initial_layout = BoardFactory.get_default_layout()
@@ -77,7 +71,6 @@ class EngineFacade:
                 for c in range(constants.GRID_SIZE):
                     board_obj.matrix[r][c] = initial_layout[r][c]
 
-        # 4. Clear move queues and piece states
         self._runner.chronology.pending_movements.clear()
         self._runner.chronology.airborne_pieces.clear()
         self._runner.status.moved_pieces.clear()

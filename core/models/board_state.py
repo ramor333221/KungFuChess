@@ -1,4 +1,3 @@
-# models/board_state.py
 from typing import List
 import core.config.constants as constants
 

@@ -1,8 +1,8 @@
 import cv2
 from pathlib import Path
 
-from GUI.ui.input_handler import InputHandler
-from GUI.ui.renderer import Renderer
+from GUI.input_handler import InputHandler
+from GUI.renderer import Renderer
 from utils.animation_manager import AnimationManager
 from utils.img import Img
 import core.config.constants as constants
@@ -78,28 +78,20 @@ class BoardController:
         """
         status = self.facade._runner.status
 
-        # --- 1. GAME OVER UI INTERACTION ---
         if status.game_over:
-            # Check if click is inside the "New Game" button area
-            # Adjust these coordinates (x, y, w, h) to match your UI layout
             button_x, button_y, button_w, button_h = 250, 500, 300, 100
 
             if button_x <= x <= (button_x + button_w) and \
                     button_y <= y <= (button_y + button_h):
                 print("DEBUG: New Game button clicked.")
                 self.facade.reset_game()
-                return  # Stop processing clicks while game is resetting
-            return  # Ignore board clicks when the game is over
+                return
+            return
 
-        # --- 2. REGULAR GAMEPLAY MOVEMENT ---
-        # Map pixel coordinates (x, y) to grid coordinates (row, col)
-        # This mapping depends on your board's cell size and offsets
         row = y // constants.CELL_SIZE
         col = x // constants.CELL_SIZE
 
-        # Ensure click is within grid bounds
         if 0 <= row < constants.GRID_SIZE and 0 <= col < constants.GRID_SIZE:
-            # Your existing logic to handle selecting and moving pieces
             self.process_board_click(row, col)
         else:
             print(f"DEBUG: Clicked outside the board at ({x}, {y})")
@@ -108,8 +100,6 @@ class BoardController:
         last_time = cv2.getTickCount()
 
         while True:
-            # All lines inside the while loop must be indented by 12 spaces
-            # (or 3 tabs) relative to the start of the file
             key = cv2.waitKey(1) & 0xFF
 
             if key == 14:  # Ctrl+N
@@ -132,5 +122,4 @@ class BoardController:
                 self.selected_square
             )
 
-            # This line must be aligned with the lines above it inside the while loop
             cv2.imshow("Main Board", canvas)

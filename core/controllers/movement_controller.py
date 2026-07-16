@@ -54,7 +54,7 @@ class MovementController:
                 to_pos,
                 self.is_airborne
         ):
-            # 1. Scoring & Capture Logic
+
             if target_token and target_token != constants.EMPTY_CELL:
                 points = 1 if 'P' in target_token else (3 if 'Q' in target_token else 2)
                 self.status.update_score(self.status.current_turn, points)

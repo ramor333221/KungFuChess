@@ -1,4 +1,4 @@
-from GUI.ui.board_controller import BoardController
+from GUI.board_controller import BoardController
 from application.engine_facade import EngineFacade
 
 def main():

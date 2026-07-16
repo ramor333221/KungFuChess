@@ -1,4 +1,3 @@
-# io_layers/board_printer.py
 from typing import List
 
 class BoardPrinter:

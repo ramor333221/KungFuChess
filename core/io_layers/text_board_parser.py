@@ -1,4 +1,3 @@
-# io_layers/text_board_parser.py
 import sys
 from typing import List, Tuple, IO
 import core.config.constants as constants

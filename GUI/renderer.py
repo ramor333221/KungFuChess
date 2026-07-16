@@ -9,14 +9,12 @@ class Renderer:
         self.facade = facade
         self.dest_wrapper = Img()
 
-        # Button layout configuration
         self.btn_switch_w = 200
         self.btn_switch_h = 50
         self.btn_switch_y = 600
-        self.btn_switch_x = 0  # Will be set in render based on board_w
+        self.btn_switch_x = 0
 
     def render(self, base_img, piece_animations, selected_square):
-        # Create canvas with 300px sidebar
         canvas = cv2.copyMakeBorder(base_img, 0, 0, 0, 300,
                                     cv2.BORDER_CONSTANT, value=[0, 0, 0, 0])
         if canvas.shape[2] == 3:
@@ -33,21 +31,17 @@ class Renderer:
     def _draw_ui(self, canvas, board_w):
         status = self.facade._runner.status
 
-        # 1. Sidebar Background
         cv2.rectangle(canvas, (board_w, 0), (canvas.shape[1], canvas.shape[0]), (40, 40, 40), -1)
 
-        # 2. Turn Indicator
         turn_text = f"Turn: {'White' if status.current_turn == constants.PLAYER_WHITE else 'Black'}"
         cv2.putText(canvas, turn_text, (board_w + 20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
 
-        # 3. Scores
         cv2.putText(canvas, "SCORES", (board_w + 20, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (200, 200, 0), 2)
         cv2.putText(canvas, f"White: {status.scores.get(constants.PLAYER_WHITE, 0)}", (board_w + 20, 100),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
         cv2.putText(canvas, f"Black: {status.scores.get(constants.PLAYER_BLACK, 0)}", (board_w + 20, 130),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
 
-        # 4. History
         cv2.putText(canvas, "HISTORY", (board_w + 20, 190), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (200, 200, 0), 2)
         column_x = {constants.PLAYER_WHITE: board_w + 10, constants.PLAYER_BLACK: board_w + 150}
 
@@ -62,14 +56,12 @@ class Renderer:
                                 1)
                     y_offset += 25
 
-        # 5. Switch Turn Button
         cv2.rectangle(canvas, (self.btn_switch_x, self.btn_switch_y),
                       (self.btn_switch_x + self.btn_switch_w, self.btn_switch_y + self.btn_switch_h),
                       (100, 100, 100), -1)
         cv2.putText(canvas, "Switch Turn", (self.btn_switch_x + 30, self.btn_switch_y + 35),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
-        # 6. Game Over Overlay (Winner Name only, no button)
         if status.game_over:
             overlay = canvas.copy()
             cv2.rectangle(overlay, (0, 0), (canvas.shape[1], canvas.shape[0]), (0, 0, 0), -1)
@@ -94,14 +86,12 @@ class Renderer:
         cell_size = self.facade.mapper.cell_size
         piece_size = int(cell_size * 0.8)
 
-        # Draw Valid Move Highlights
         if selected_square:
             valid_moves = self.facade.get_valid_moves(*selected_square)
             for row, col in valid_moves:
                 cx, cy = self.facade.mapper.grid_to_pixel_center(row, col)
                 cv2.circle(canvas, (cx, cy), cell_size // 4, (0, 255, 0), -1)
 
-        # Draw Pieces
         for row in range(constants.GRID_SIZE):
             for col in range(constants.GRID_SIZE):
                 piece_code = board_matrix[row][col]
@@ -116,7 +106,6 @@ class Renderer:
                             cx, cy = self.facade.mapper.grid_to_pixel_center(row, col)
                             y1, x1 = cy - piece_size // 2, cx - piece_size // 2
 
-                            # Alpha blending for pieces
                             if resized.shape[2] == 4:
                                 alpha = resized[:, :, 3] / 255.0
                                 for c in range(3):

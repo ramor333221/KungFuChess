@@ -13,20 +13,17 @@ class InputHandler:
 
     def handle_event(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
-            # 1. Check Game Over
             if self.facade._runner.status.game_over:
                 if 250 <= x <= 550 and 500 <= y <= 600:
                     self.facade.reset_game()
                     return
 
-            # 2. Check "Switch Turn" button using renderer's coordinates
             if (self.renderer.btn_switch_x <= x <= self.renderer.btn_switch_x + self.renderer.btn_switch_w and
                     self.renderer.btn_switch_y <= y <= self.renderer.btn_switch_y + self.renderer.btn_switch_h):
                 print("Switch turn button clicked")
                 self.facade.switch_player_turn()
                 return
 
-            # 3. Check Board click (Only if button wasn't clicked)
             row, col = self.facade.mapper.pixel_to_grid(x, y)
             if 0 <= row < constants.GRID_SIZE and 0 <= col < constants.GRID_SIZE:
                 self.on_board_click(row, col)

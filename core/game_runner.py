@@ -16,7 +16,7 @@ class GameRunner:
         self.engine = ChessRulesEngine()
         self.board = None
         self.movement_ctrl = None
-        self.interaction_ctrl = None  # Already initialized to None
+        self.interaction_ctrl = None
 
     def run_game(self, raw_matrix, raw_commands):
         try:
@@ -27,7 +27,6 @@ class GameRunner:
             manager = GameStatusManager(self.board, self.status, self.chronology)
             self.movement_ctrl = MovementController(self.board, self.status, self.engine, manager)
 
-            # FIX: Change 'interaction_ctrl' to 'self.interaction_ctrl'
             self.interaction_ctrl = InteractionController(self.movement_ctrl, self.board, self.status, manager)
 
             for command in raw_commands:
@@ -35,7 +34,6 @@ class GameRunner:
                     break
                 parts = command.split()
                 if parts:
-                    # FIX: Use self.interaction_ctrl here as well
                     self.interaction_ctrl.execute_command(parts[0], parts[1:])
 
         except BoardValidationError as e:
