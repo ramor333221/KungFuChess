@@ -1,8 +1,9 @@
-from core.config import constants
+from config import constants
 from core.game_runner import GameRunner
-from utils.BoardFactory import BoardFactory
-from utils.board_mapper import BoardMapper
-from utils.img import Img
+from utils.UI.img import Img
+from utils.input.BoardFactory import BoardFactory
+from utils.input.board_mapper import BoardMapper
+
 
 
 class EngineFacade:

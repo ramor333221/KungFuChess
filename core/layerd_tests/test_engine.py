@@ -4,7 +4,7 @@ from core.models.board_state import BoardState
 from core.models.game_status import GameStatus, GameChronology
 from core.engine.chess_rules_engine import ChessRulesEngine
 from core.engine.game_status_manager import GameStatusManager
-import core.config.constants as constants
+from config import constants
 
 
 class TestChessRulesEngine(unittest.TestCase):

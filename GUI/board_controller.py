@@ -3,9 +3,9 @@ from pathlib import Path
 
 from GUI.input_handler import InputHandler
 from GUI.renderer import Renderer
-from utils.animation_manager import AnimationManager
-from utils.img import Img
-import core.config.constants as constants
+from config import constants
+from utils.UI.animation_manager import AnimationManager
+from utils.UI.img import Img
 
 
 class BoardController:
@@ -61,7 +61,7 @@ class BoardController:
             print("Selection cancelled")
 
     def _load_animations(self):
-        base_path = Path(__file__).resolve().parent.parent.parent / "piece_mine"
+        base_path = Path(__file__).resolve().parent.parent / "piece_mine"
         if base_path.exists():
             for folder in base_path.iterdir():
                 if folder.is_dir() and (path := folder / "states" / "idle").exists():

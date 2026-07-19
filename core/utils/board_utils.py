@@ -1,5 +1,5 @@
 from typing import List, Tuple
-import core.config.constants as constants
+from config import constants
 
 
 class BoardUtils:

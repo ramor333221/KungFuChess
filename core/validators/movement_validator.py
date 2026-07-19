@@ -1,4 +1,3 @@
-# validators/movement_validator.py
 from core.models.board_state import BoardState
 from core.models.game_status import GameStatus
 

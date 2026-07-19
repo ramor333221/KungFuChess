@@ -1,5 +1,5 @@
 from typing import List
-import core.config.constants as constants
+from config import constants
 from core.exceptions.game_exceptions import MovementError, LogicError
 from core.io_layers.board_printer import BoardPrinter
 

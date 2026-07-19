@@ -1,4 +1,4 @@
-from core.config import constants
+from config import constants
 from core.engine.Piece_rule import KingRule, KnightRule, SlidingRule, PawnRule
 from core.exceptions.game_exceptions import MovementError, LogicError
 

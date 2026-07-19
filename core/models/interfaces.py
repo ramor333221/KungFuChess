@@ -1,4 +1,3 @@
-# models/interfaces.py
 from typing import Protocol, Tuple, Set, List, Optional, Dict
 
 

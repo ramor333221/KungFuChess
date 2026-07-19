@@ -1,6 +1,6 @@
 # validators/board_validator.py
 from typing import List, Set
-import core.config.constants as constants
+from config import constants
 from core.models.board_state import BoardState
 from core.exceptions.game_exceptions import BoardValidationError
 

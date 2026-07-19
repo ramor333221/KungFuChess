@@ -1,6 +1,6 @@
 import sys
 from typing import List, Tuple, IO
-import core.config.constants as constants
+from config import constants
 
 class TextBoardParser:
     def __init__(self, input_stream: IO = sys.stdin):

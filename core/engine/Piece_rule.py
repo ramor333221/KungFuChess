@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from core.config import constants
+from config import constants
 from core.utils.board_utils import BoardUtils
 
 

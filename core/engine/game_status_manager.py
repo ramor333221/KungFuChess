@@ -1,6 +1,6 @@
 import heapq
 from typing import Tuple
-import core.config.constants as constants
+from config import constants
 from core.exceptions.game_exceptions import MovementError
 from core.models.game_status import PendingMovement, AirborneMovement, AirborneSession, GameChronology
 from core.models.interfaces import WritableBoard, WritableGameStatus

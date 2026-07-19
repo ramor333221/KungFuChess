@@ -1,6 +1,6 @@
 # tests/test_utils.py
 import unittest
-from utils.board_mapper import BoardMapper
+from utils.input.board_mapper import BoardMapper
 
 class TestBoardMapper(unittest.TestCase):
     def setUp(self):

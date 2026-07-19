@@ -1,7 +1,7 @@
-import cv2
 import time
-import core.config.constants as constants
-from utils.img import Img
+import cv2
+from config import constants
+from utils.UI.img import Img
 
 
 class Renderer:
@@ -21,7 +21,7 @@ class Renderer:
             canvas = cv2.cvtColor(canvas, cv2.COLOR_BGR2BGRA)
 
         board_w = base_img.shape[1]
-        self.btn_switch_x = board_w + 50  # Sync button X with board width
+        self.btn_switch_x = board_w + 50
 
         self._draw_board(canvas, piece_animations, selected_square)
         self._draw_ui(canvas, board_w)
@@ -102,6 +102,7 @@ class Renderer:
                         anim.set_state(state)
                         frame = anim.get_current_frame(current_time)
                         if frame and hasattr(frame, 'img'):
+
                             resized = cv2.resize(frame.img, (piece_size, piece_size))
                             cx, cy = self.facade.mapper.grid_to_pixel_center(row, col)
                             y1, x1 = cy - piece_size // 2, cx - piece_size // 2

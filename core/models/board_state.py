@@ -1,5 +1,5 @@
 from typing import List
-import core.config.constants as constants
+from config import constants
 
 class BoardState:
     def __init__(self, matrix: List[List[str]]):

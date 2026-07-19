@@ -4,7 +4,7 @@ import time
 from dataclasses import dataclass, field
 from typing import List, Tuple, Dict, Set, Optional
 
-from core.config import constants
+from config import constants
 
 
 @dataclass

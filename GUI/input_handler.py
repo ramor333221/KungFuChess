@@ -1,8 +1,6 @@
 import cv2
 
-from core.config import constants
-
-
+from config import constants
 
 
 class InputHandler:

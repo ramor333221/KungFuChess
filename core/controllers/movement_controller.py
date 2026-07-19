@@ -1,5 +1,5 @@
 from typing import Tuple
-import core.config.constants as constants
+from config import constants
 from core.exceptions.game_exceptions import MovementError, LogicError
 # Assuming these are defined in models/interfaces.py
 from core.models.interfaces import ReadOnlyBoard, MovementStatus
