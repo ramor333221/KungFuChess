@@ -22,13 +22,16 @@ class GameStatusManager:
         """
         target_time = self._status.game_clock_ms + ms_elapsed
         while self._status.game_clock_ms < target_time:
-            tick = min(1000, target_time - self._status.game_clock_ms)
+            tick = min(constants.MOVEMENT_DURATION_MS, target_time - self._status.game_clock_ms)
             self._status.game_clock_ms += tick
             self.resolve_expired_movements()
 
     def add_airborne_movement(self, from_pos: Tuple[int, int], target_pos: Tuple[int, int], token: str) -> None:
+        """
+        Registers an airborne movement session for a piece, calculating the
+        expected arrival time based on the game clock.
+        """
         arrival = self._status.game_clock_ms + self._calculate_duration(from_pos, target_pos)
-        # FIX: Access chronology instead of status
         self._chronology.airborne_pieces[target_pos] = AirborneSession(
             from_pos=from_pos,
             movement=AirborneMovement(token, arrival)
@@ -36,6 +39,10 @@ class GameStatusManager:
         self._status.moved_pieces.add(from_pos)
 
     def resolve_expired_movements(self) -> None:
+        """
+        Checks both pending linear movements and active airborne sessions,
+        finalizing the landing of any pieces that have reached their target time.
+        """
         now = self._status.game_clock_ms
 
         while self._chronology.pending_movements and self._chronology.pending_movements[0].arrival_time_ms <= now:
@@ -48,6 +55,10 @@ class GameStatusManager:
             self._land_piece(session.from_pos, pos, session.movement.piece_token)
 
     def add_linear_movement(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int], token: str) -> None:
+        """
+        Adds or updates a linear movement in the pending movements queue,
+        ensuring the piece reaches its destination at the calculated time.
+        """
         for move in self._chronology.pending_movements:
             if move.from_pos == from_pos:
                 move.to_pos = to_pos

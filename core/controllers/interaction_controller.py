@@ -23,6 +23,10 @@ class InteractionController:
         }
 
     def execute_command(self, action: str, args: list):
+        """
+        Routes the received action command to the corresponding internal handler method.
+        Resets selection if a logic or movement error occurs during execution.
+        """
         handler = self._dispatch_map.get(action.lower())
         if handler:
             try:
@@ -61,11 +65,18 @@ class InteractionController:
                 self.status.selected_pos = None
 
     def _is_same_color(self, pos1, pos2):
+        """
+        Checks if two tokens located at pos1 and pos2 share the same team color.
+        """
         token1 = self.board.get_token(pos1[0], pos1[1])
         token2 = self.board.get_token(pos2[0], pos2[1])
         return token1[0] == token2[0]
 
     def _handle_jump(self, args: List[str]):
+        """
+        Converts pixel coordinates to grid coordinates and triggers
+        an airborne movement state for the piece.
+        """
         try:
             row, col = self.mapper.pixel_to_grid(int(args[0]), int(args[1]))
             self.movement.prepare_airborne_move(row, col)
@@ -73,12 +84,18 @@ class InteractionController:
             raise LogicError("Invalid jump coordinate arguments.")
 
     def _handle_wait(self, args: List[str]):
+        """
+        Advances the animation manager's state by a specified number of milliseconds.
+        """
         try:
             self.manager.process_time_tick(int(args[0]))
         except (ValueError, IndexError):
             raise LogicError("Invalid time tick argument.")
 
     def _handle_print(self, args: List[str]):
+        """
+        Outputs the current state of the game board matrix to the console.
+        """
         BoardPrinter.print_board(self.board.matrix)
 
     def _handle_switch_turn(self, args: List[str]):

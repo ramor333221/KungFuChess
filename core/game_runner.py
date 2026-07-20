@@ -7,9 +7,9 @@ from core.models.game_status import GameStatus, GameChronology
 from core.validators.board_validator import BoardValidator
 
 
-# core/game_runner.py
-
 class GameRunner:
+    """Manages game execution, board validation, and move processing."""
+
     def __init__(self):
         self.status = GameStatus()
         self.chronology = GameChronology()
@@ -19,6 +19,7 @@ class GameRunner:
         self.interaction_ctrl = None
 
     def run_game(self, raw_matrix, raw_commands):
+        """Validates the board state and executes a sequence of game commands."""
         try:
             self.board = BoardValidator().validate(raw_matrix)
             if not self.board:
@@ -40,6 +41,7 @@ class GameRunner:
             print(f"ERROR {e}")
 
     def get_possible_moves(self, row, col):
+        """Retrieves all legal moves for a piece at the specified position."""
         if self.movement_ctrl is None:
             return []
         return self.movement_ctrl.get_legal_moves(row, col)

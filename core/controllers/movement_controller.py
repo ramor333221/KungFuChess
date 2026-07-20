@@ -4,6 +4,7 @@ from core.exceptions.game_exceptions import MovementError, LogicError
 # Assuming these are defined in models/interfaces.py
 from core.models.interfaces import ReadOnlyBoard, MovementStatus
 
+
 class MovementController:
     """
     Manages game piece movement, validating legality through the rules engine
@@ -43,6 +44,10 @@ class MovementController:
         self.is_airborne = True
 
     def execute_move(self, from_pos: Tuple[int, int], to_pos: Tuple[int, int]):
+        """
+        Validates the move using the rules engine and updates board state,
+        scores, and animation queues accordingly.
+        """
         token = self.board.get_token(*from_pos)
         target_token = self.board.get_token(*to_pos)
 
@@ -58,7 +63,6 @@ class MovementController:
             if target_token and target_token != constants.EMPTY_CELL:
                 points = 1 if 'P' in target_token else (3 if 'Q' in target_token else 2)
                 self.status.update_score(self.status.current_turn, points)
-
 
             if not hasattr(self.status, 'piece_states'):
                 self.status.piece_states = {}
@@ -78,6 +82,10 @@ class MovementController:
             raise MovementError(f"Illegal move from {from_pos} to {to_pos}.")
 
     def get_legal_moves(self, row, col):
+        """
+        Iterates through the board grid to identify all valid moves
+        for a piece at the specified position.
+        """
         legal_moves = []
         piece_token = self.board.matrix[row][col]
         piece_color = piece_token[0]
@@ -105,7 +113,7 @@ class MovementController:
                 except Exception:
                     continue
         return legal_moves
-            
+
     def reset_selection(self):
         """
         Clears the current piece selection and resets airborne movement flags.

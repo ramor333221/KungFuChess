@@ -1,5 +1,5 @@
 from GUI.board_controller import BoardController
-from application.engine_facade import EngineFacade
+from application.network.engine_facade import EngineFacade
 
 def main():
     facade = EngineFacade()
