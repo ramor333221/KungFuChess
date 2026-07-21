@@ -6,18 +6,17 @@ from src.core.game_runner import GameRunner
 from src.utils.UI.img import Img
 from src.utils.input.BoardFactory import BoardFactory
 from src.utils.input.board_mapper import BoardMapper
+from src.utils.observer.achievement_observer import AchievementObserver
+from src.utils.observer.move_observer import MoveLoggerObserver
 from src.utils.observer.observer import Subject
 from src.utils.observer.score_observer import ScoreObserver
+from src.utils.observer.sound_observer import SoundObserver
 
 
 class EngineFacade(Subject):
-    """
-    Facade class that bridges the GUI with the game engine logic,
-    handles network communication, and manages database interactions.
-    """
+    """Facade class bridging the GUI with the game engine logic using the Observer pattern."""
 
-    def __init__(self, board_path, db_manager, board_matrix=None, player_color=None, username="Player"):
-        """Initializes the facade, loads board assets, and sets up game state."""
+    def __init__(self, board_path, db_manager, board_matrix=None, player_color=None, username="Player", message_broker=None):
         super().__init__()
         self._runner = GameRunner()
         self.db_manager = db_manager
@@ -28,9 +27,16 @@ class EngineFacade(Subject):
         self.mapper = BoardMapper(self.board_base.img)
         self.websocket = None
         self.opponent_username = "Unknown_Opponent"
+        self.broker = message_broker
+        self.room_name = None
+        self.on_server_message = None
+        self.on_opponent_disconnect = None
         self._runner.status.on_game_over = self._handle_game_end
 
         self.attach(ScoreObserver(self.db_manager))
+        self.attach(MoveLoggerObserver())
+        self.attach(AchievementObserver())
+        self.attach(SoundObserver())
 
         if board_matrix is None:
             board_matrix = BoardFactory.get_default_layout()
@@ -38,7 +44,6 @@ class EngineFacade(Subject):
         self._runner.run_game(board_matrix, [])
 
     async def connect_to_server(self, uri="ws://localhost:8765", elo=1200):
-        """Establishes a WebSocket connection and authenticates the player with ELO."""
         self.websocket = await websockets.connect(uri)
         await self.websocket.send(json.dumps({
             "type": "LOGIN",
@@ -47,15 +52,19 @@ class EngineFacade(Subject):
         }))
 
     async def send_move(self, move_data):
-        """Transmits move data to the game server."""
         if self.websocket:
-            await self.websocket.send(json.dumps({
+            payload = {
                 "type": "MOVE",
                 "data": move_data
-            }))
+            }
+            if self.room_name:
+                payload["room_name"] = self.room_name
+            await self.websocket.send(json.dumps(payload))
+
+        if self.broker:
+            await self.broker.publish(constants.TOPIC_PLAYER_MOVE, move_data)
 
     def process_move(self, command_str):
-        """Processes a local move command through the game runner, attributing history to the piece's color."""
         parts = command_str.split()
         if not parts:
             return None
@@ -63,7 +72,6 @@ class EngineFacade(Subject):
         try:
             from_r = int(parts[1])
             from_c = int(parts[2])
-
             board_matrix = self.get_board_data()
             piece_code = board_matrix[from_r][from_c]
 
@@ -77,7 +85,6 @@ class EngineFacade(Subject):
             player_id = self._runner.status.current_turn
 
         self._runner.status.add_history(player_id, command_str)
-
         result = self._runner.interaction_ctrl.execute_command(parts[0], parts[1:])
 
         if not getattr(self._runner.status, 'game_over', False):
@@ -86,10 +93,8 @@ class EngineFacade(Subject):
         return result
 
     def _handle_game_end(self):
-        """Handles post-game logic and updates score statistics on game completion."""
         winner = self._runner.status.winner
         is_winner = str(winner).lower() == str(self.player_color).lower()
-
         winner_name = self.username if is_winner else self.opponent_username
         loser_name = self.opponent_username if is_winner else self.username
 
@@ -100,26 +105,29 @@ class EngineFacade(Subject):
             })
 
     def get_board_data(self):
-        """Retrieves the current matrix representation of the game board."""
         if hasattr(self._runner, 'board') and self._runner.board is not None:
             return self._runner.board.matrix
         return [[None for _ in range(constants.BOARD_SIZE)] for _ in range(constants.BOARD_SIZE)]
 
     def get_valid_moves(self, row, col):
-        """Calculates valid moves for a piece at the specified position."""
         return self._runner.get_possible_moves(row, col)
 
     def get_game_over_status(self):
-        """Checks if the game has reached a terminal state."""
         return getattr(self._runner.status, 'game_over', False)
 
     def switch_player_turn(self):
-        """Transitions the turn to the next player."""
         self._runner.status.selected_pos = None
         self._runner.status.switch_turn()
 
+    async def initialize_broker_listeners(self):
+        if self.broker:
+            await self.broker.subscribe(constants.TOPIC_OPPONENT_MOVE, self._handle_remote_move)
+
+    async def _handle_remote_move(self, move_data):
+        if move_data:
+            self.process_move(move_data)
+
     def reset_game(self):
-        """Resets the board, scores, and all temporary move states."""
         self._runner.status.game_over = False
         self._runner.status.winner = None
         self._runner.status.current_turn = constants.PLAYER_WHITE
@@ -137,7 +145,6 @@ class EngineFacade(Subject):
             self._runner.status.piece_states.clear()
 
     async def wait_for_match_and_listen(self, on_start_callback):
-        """Waits for the START message from the server in the background."""
         if not self.websocket:
             return
 
@@ -152,24 +159,37 @@ class EngineFacade(Subject):
                 if msg_type == 'START':
                     self.player_color = data.get('color')
                     self.opponent_username = data.get('opponent', "Unknown_Opponent")
-                    room_id = data.get('room')
+                    room_id = data.get('room') or data.get('room_name')
+                    self.room_name = room_id
 
                     await on_start_callback(room_id)
                     break
-        except Exception as e:
-            pass
+        except Exception:
+            if self.on_opponent_disconnect:
+                self.on_opponent_disconnect()
 
-    async def listen_for_moves(self, callback):
-        """Listens continuously for remote move commands and server event notifications."""
+    async def listen_for_server_messages(self):
         if not self.websocket:
             return
+
         try:
             async for message in self.websocket:
                 if message is None:
                     continue
 
                 data = json.loads(message)
-                callback(data)
+                msg_type = data.get('type')
 
-        except Exception as e:
-            pass
+                if self.on_server_message:
+                    self.on_server_message(data)
+
+                if msg_type == 'MOVE':
+                    if self.broker:
+                        await self.broker.publish(constants.TOPIC_OPPONENT_MOVE, data.get('data'))
+                elif msg_type in ('OPPONENT_DISCONNECTED', 'DISCONNECT'):
+                    if self.on_opponent_disconnect:
+                        self.on_opponent_disconnect()
+
+        except Exception:
+            if self.on_opponent_disconnect:
+                self.on_opponent_disconnect()

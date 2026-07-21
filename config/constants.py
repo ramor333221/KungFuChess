@@ -9,6 +9,7 @@ CELL_SIZE = 80
 HALF_CELL = CELL_SIZE // 2
 SQUARE_PADDING = 3
 EMPTY_CELL: str = "."
+BOARD_SIZE = 8
 
 # ==============================================================================
 # GAME LOGIC & PLAYERS
@@ -120,3 +121,9 @@ PLAYER_BLACK = "Black"
 DB_NAME = "chess_scores.db"
 EVENT_MOVE_COMPLETED = "move_completed"
 EVENT_GAME_OVER = "game_over"
+
+
+# Pub-Sub Topics for Network/Server Communication
+TOPIC_PLAYER_MOVE = "player_move"
+TOPIC_OPPONENT_MOVE = "opponent_move"
+TOPIC_SERVER_ALERT = "server_alert"
