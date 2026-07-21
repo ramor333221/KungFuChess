@@ -48,3 +48,143 @@
 2026-07-21 11:50:20,289 - INFO - Move completed event processed: {'data': 'click 1 5 0 4'}
 2026-07-21 11:50:30,718 - INFO - Received server message type: OPPONENT_DISCONNECTED
 2026-07-21 11:50:30,718 - WARNING - Opponent disconnected! Starting local visual countdown.
+2026-07-21 12:13:01,516 - INFO - User closed window via 'q' key.
+2026-07-21 13:46:13,444 - INFO - BoardController initialized successfully (Window deferred).
+2026-07-21 13:46:18,533 - INFO - Received server message type: START
+2026-07-21 13:46:18,534 - INFO - Game started in room eb53426a as white
+2026-07-21 13:46:20,396 - INFO - BoardController initialized successfully (Window deferred).
+2026-07-21 13:46:20,444 - INFO - Received server message type: START
+2026-07-21 13:46:20,444 - INFO - Game started in room eb53426a as black
+2026-07-21 13:46:23,457 - INFO - Piece selected at row 6, col 4
+2026-07-21 13:46:24,004 - INFO - Move completed event processed: {'data': 'click 6 4 4 4'}
+2026-07-21 13:46:24,004 - INFO - Executed move command locally: click 6 4 4 4
+2026-07-21 13:46:24,004 - INFO - Transmitted move over WebSocket.
+2026-07-21 13:46:24,016 - INFO - Received server message type: MOVE
+2026-07-21 13:46:24,016 - INFO - Processing remote move from opponent: click 6 4 4 4
+2026-07-21 13:46:24,016 - INFO - Move completed event processed: {'data': 'click 6 4 4 4'}
+2026-07-21 13:46:28,898 - INFO - Piece selected at row 1, col 2
+2026-07-21 13:46:29,433 - INFO - Move completed event processed: {'data': 'click 1 2 3 2'}
+2026-07-21 13:46:29,433 - INFO - Executed move command locally: click 1 2 3 2
+2026-07-21 13:46:29,433 - INFO - Transmitted move over WebSocket.
+2026-07-21 13:46:29,439 - INFO - Received server message type: MOVE
+2026-07-21 13:46:29,439 - INFO - Processing remote move from opponent: click 1 2 3 2
+2026-07-21 13:46:29,440 - INFO - Move completed event processed: {'data': 'click 1 2 3 2'}
+2026-07-21 13:46:32,099 - INFO - Piece selected at row 3, col 2
+2026-07-21 13:46:32,600 - INFO - Move completed event processed: {'data': 'click 3 2 4 2'}
+2026-07-21 13:46:32,601 - INFO - Executed move command locally: click 3 2 4 2
+2026-07-21 13:46:32,601 - INFO - Transmitted move over WebSocket.
+2026-07-21 13:46:32,615 - INFO - Received server message type: MOVE
+2026-07-21 13:46:32,615 - INFO - Processing remote move from opponent: click 3 2 4 2
+2026-07-21 13:46:32,616 - INFO - Move completed event processed: {'data': 'click 3 2 4 2'}
+2026-07-21 13:46:34,026 - INFO - Piece selected at row 4, col 2
+2026-07-21 13:46:34,472 - INFO - Move completed event processed: {'data': 'click 4 2 5 2'}
+2026-07-21 13:46:34,472 - INFO - Executed move command locally: click 4 2 5 2
+2026-07-21 13:46:34,472 - INFO - Transmitted move over WebSocket.
+2026-07-21 13:46:34,480 - INFO - Received server message type: MOVE
+2026-07-21 13:46:34,480 - INFO - Processing remote move from opponent: click 4 2 5 2
+2026-07-21 13:46:34,480 - INFO - Move completed event processed: {'data': 'click 4 2 5 2'}
+2026-07-21 13:46:37,840 - INFO - User closed window via 'q' key.
+2026-07-21 13:46:37,902 - INFO - Received server message type: OPPONENT_DISCONNECTED
+2026-07-21 13:46:37,902 - WARNING - Opponent disconnected! Starting local visual countdown.
+2026-07-21 13:46:38,721 - INFO - User closed window via 'q' key.
+2026-07-21 13:47:48,422 - INFO - BoardController initialized successfully (Window deferred).
+2026-07-21 13:47:57,564 - INFO - Received server message type: START
+2026-07-21 13:47:57,564 - INFO - Game started in room 91c33d91 as white
+2026-07-21 13:47:59,168 - INFO - BoardController initialized successfully (Window deferred).
+2026-07-21 13:47:59,216 - INFO - Received server message type: START
+2026-07-21 13:47:59,216 - INFO - Game started in room 91c33d91 as black
+2026-07-21 13:47:59,217 - INFO - Received server message type: ERROR
+2026-07-21 13:48:05,028 - INFO - Piece selected at row 6, col 4
+2026-07-21 13:48:05,610 - INFO - Move completed event processed: {'data': 'click 6 4 4 4'}
+2026-07-21 13:48:05,610 - INFO - Executed move command locally: click 6 4 4 4
+2026-07-21 13:48:05,610 - INFO - Transmitted move over WebSocket.
+2026-07-21 13:48:05,620 - INFO - Received server message type: MOVE
+2026-07-21 13:48:05,620 - INFO - Processing remote move from opponent: click 6 4 4 4
+2026-07-21 13:48:05,620 - INFO - Move completed event processed: {'data': 'click 6 4 4 4'}
+2026-07-21 13:48:09,150 - INFO - Piece selected at row 1, col 2
+2026-07-21 13:48:09,612 - INFO - Move completed event processed: {'data': 'click 1 2 3 2'}
+2026-07-21 13:48:09,612 - INFO - Executed move command locally: click 1 2 3 2
+2026-07-21 13:48:09,613 - INFO - Transmitted move over WebSocket.
+2026-07-21 13:48:09,631 - INFO - Received server message type: MOVE
+2026-07-21 13:48:09,631 - INFO - Processing remote move from opponent: click 1 2 3 2
+2026-07-21 13:48:09,631 - INFO - Move completed event processed: {'data': 'click 1 2 3 2'}
+2026-07-21 13:48:17,113 - INFO - User closed window via 'q' key.
+2026-07-21 13:48:17,181 - INFO - Received server message type: OPPONENT_DISCONNECTED
+2026-07-21 13:48:17,181 - WARNING - Opponent disconnected! Starting local visual countdown.
+2026-07-21 13:48:17,808 - INFO - User closed window via 'q' key.
+2026-07-21 13:56:30,561 - INFO - BoardController initialized successfully.
+2026-07-21 13:57:07,843 - INFO - Received server message type: START
+2026-07-21 13:57:07,843 - INFO - Game started in room Match_c_d as white
+2026-07-21 13:57:09,401 - INFO - BoardController initialized successfully.
+2026-07-21 13:57:09,402 - INFO - Received server message type: START
+2026-07-21 13:57:09,402 - INFO - Game started in room room1 as white
+2026-07-21 13:57:09,449 - INFO - Received server message type: START
+2026-07-21 13:57:09,449 - INFO - Game started in room Match_c_d as black
+2026-07-21 13:57:09,449 - INFO - Received server message type: START
+2026-07-21 13:57:09,449 - INFO - Game started in room room1 as black
+2026-07-21 13:57:21,245 - INFO - Move completed: {'data': 'click 6 4 4 4'}
+2026-07-21 13:57:21,246 - INFO - Received server message type: MOVE
+2026-07-21 13:57:21,246 - INFO - Move completed: {'data': 'click 6 4 4 4'}
+2026-07-21 13:57:36,345 - INFO - BoardController initialized successfully.
+2026-07-21 13:57:43,464 - INFO - Received server message type: START
+2026-07-21 13:57:43,464 - INFO - Game started in room Match_a_b as white
+2026-07-21 13:57:45,219 - INFO - BoardController initialized successfully.
+2026-07-21 13:57:45,332 - INFO - Received server message type: START
+2026-07-21 13:57:45,332 - INFO - Game started in room Match_a_b as black
+2026-07-21 13:57:53,300 - INFO - Move completed: {'data': 'click 6 6 4 6'}
+2026-07-21 13:57:53,306 - INFO - Received server message type: MOVE
+2026-07-21 13:57:53,307 - INFO - Move completed: {'data': 'click 6 6 4 6'}
+2026-07-21 14:04:39,389 - INFO - BoardController initialized successfully.
+2026-07-21 14:04:44,422 - INFO - Received server message type: START
+2026-07-21 14:04:44,422 - INFO - Game started in room Match_a_b as white
+2026-07-21 14:04:46,142 - INFO - BoardController initialized successfully.
+2026-07-21 14:04:46,194 - INFO - Received server message type: START
+2026-07-21 14:04:46,194 - INFO - Game started in room Match_a_b as black
+2026-07-21 14:04:51,531 - INFO - Move completed: {'data': 'click 6 5 4 5'}
+2026-07-21 14:04:51,549 - INFO - Received server message type: MOVE
+2026-07-21 14:04:51,549 - INFO - Move completed: {'data': 'click 6 5 4 5'}
+2026-07-21 14:04:57,148 - INFO - Received server message type: OPPONENT_DISCONNECTED
+2026-07-21 14:04:57,148 - WARNING - Opponent disconnected! Starting 20s visual countdown.
+2026-07-21 14:05:17,185 - INFO - Received server message type: WIN_BY_TIMEOUT
+2026-07-21 14:05:17,185 - INFO - Won game due to opponent timeout.
+2026-07-21 14:05:17,209 - INFO - Closing window following timeout victory.
+2026-07-21 14:06:02,117 - INFO - BoardController initialized successfully.
+2026-07-21 14:06:26,631 - INFO - BoardController initialized successfully.
+2026-07-21 14:06:38,773 - INFO - Received server message type: START
+2026-07-21 14:06:38,773 - INFO - Game started in room Match_d_c as white
+2026-07-21 14:06:41,182 - INFO - BoardController initialized successfully.
+2026-07-21 14:06:41,252 - INFO - Received server message type: START
+2026-07-21 14:06:41,252 - INFO - Game started in room Match_d_c as black
+2026-07-21 14:06:41,252 - INFO - Received server message type: ERROR
+2026-07-21 14:06:50,042 - INFO - Move completed: {'data': 'click 6 4 4 4'}
+2026-07-21 14:06:50,043 - INFO - Received server message type: MOVE
+2026-07-21 14:06:50,043 - INFO - Move completed: {'data': 'click 6 4 4 4'}
+2026-07-21 14:07:01,344 - INFO - Received server message type: OPPONENT_DISCONNECTED
+2026-07-21 14:07:01,344 - WARNING - Opponent disconnected! Starting 20s visual countdown.
+2026-07-21 14:07:21,354 - INFO - Received server message type: WIN_BY_TIMEOUT
+2026-07-21 14:07:21,354 - INFO - Won game due to opponent timeout.
+2026-07-21 14:07:21,368 - INFO - Closing window following timeout victory.
+2026-07-21 14:10:26,811 - INFO - BoardController initialized successfully.
+2026-07-21 14:10:41,933 - INFO - Received server message type: START
+2026-07-21 14:10:41,933 - INFO - Game started in room Match_c_d as white
+2026-07-21 14:10:43,284 - INFO - BoardController initialized successfully.
+2026-07-21 14:10:43,331 - INFO - Received server message type: START
+2026-07-21 14:10:43,331 - INFO - Game started in room Match_c_d as black
+2026-07-21 14:10:43,331 - INFO - Received server message type: ERROR
+2026-07-21 14:10:48,213 - INFO - Move completed: {'data': 'click 6 4 4 4'}
+2026-07-21 14:10:48,223 - INFO - Received server message type: MOVE
+2026-07-21 14:10:48,223 - INFO - Move completed: {'data': 'click 6 4 4 4'}
+2026-07-21 14:10:51,602 - INFO - Move completed: {'data': 'click 4 4 3 4'}
+2026-07-21 14:10:51,611 - INFO - Received server message type: MOVE
+2026-07-21 14:10:51,611 - INFO - Move completed: {'data': 'click 4 4 3 4'}
+2026-07-21 14:10:54,450 - INFO - Move completed: {'data': 'click 3 4 2 4'}
+2026-07-21 14:10:54,467 - INFO - Received server message type: MOVE
+2026-07-21 14:10:54,467 - INFO - Move completed: {'data': 'click 3 4 2 4'}
+2026-07-21 14:10:56,340 - INFO - Move completed: {'data': 'click 2 4 1 5'}
+2026-07-21 14:10:56,350 - INFO - Received server message type: MOVE
+2026-07-21 14:10:56,351 - INFO - Move completed: {'data': 'click 2 4 1 5'}
+2026-07-21 14:10:58,476 - INFO - Move completed: {'data': 'click 1 5 0 4'}
+2026-07-21 14:10:58,485 - INFO - Received server message type: MOVE
+2026-07-21 14:10:58,486 - INFO - Move completed: {'data': 'click 1 5 0 4'}
+2026-07-21 14:11:02,678 - INFO - Received server message type: OPPONENT_DISCONNECTED
+2026-07-21 14:11:02,678 - WARNING - Opponent disconnected! Starting 20s visual countdown.
