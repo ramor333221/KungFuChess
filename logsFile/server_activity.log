@@ -1,0 +1,25 @@
+2026-07-21 11:49:53,119 - INFO - Received message type 'LOGIN' from client[cite: 9].
+2026-07-21 11:49:53,119 - INFO - Player logged in: a with ELO 1200
+2026-07-21 11:49:53,119 - INFO - Player a entered matchmaking queue.
+2026-07-21 11:50:01,705 - INFO - Received message type 'LOGIN' from client[cite: 9].
+2026-07-21 11:50:01,705 - INFO - Player logged in: b with ELO 1220
+2026-07-21 11:50:01,705 - INFO - Player b entered matchmaking queue.
+2026-07-21 11:50:01,705 - INFO - Auto-match found! Game started in room c67cdfe0 between b and a.
+2026-07-21 11:50:02,210 - INFO - Auto-match found! Game started in room e0677b38 between a and b.
+2026-07-21 11:50:07,714 - INFO - Received message type 'MOVE' from client[cite: 9].
+2026-07-21 11:50:07,714 - INFO - MOVE command processed in room e0677b38[cite: 9]
+2026-07-21 11:50:11,358 - INFO - Received message type 'MOVE' from client[cite: 9].
+2026-07-21 11:50:11,359 - INFO - MOVE command processed in room e0677b38[cite: 9]
+2026-07-21 11:50:14,130 - INFO - Received message type 'MOVE' from client[cite: 9].
+2026-07-21 11:50:14,130 - INFO - MOVE command processed in room e0677b38[cite: 9]
+2026-07-21 11:50:15,991 - INFO - Received message type 'MOVE' from client[cite: 9].
+2026-07-21 11:50:15,991 - INFO - MOVE command processed in room e0677b38[cite: 9]
+2026-07-21 11:50:18,128 - INFO - Received message type 'MOVE' from client[cite: 9].
+2026-07-21 11:50:18,128 - INFO - MOVE command processed in room e0677b38[cite: 9]
+2026-07-21 11:50:20,287 - INFO - Received message type 'MOVE' from client[cite: 9].
+2026-07-21 11:50:20,288 - INFO - MOVE command processed in room e0677b38[cite: 9]
+2026-07-21 11:50:30,718 - ERROR - Connection error: no close frame received or sent
+2026-07-21 11:50:30,718 - INFO - Player disconnected: b
+2026-07-21 11:50:30,718 - INFO - Player in room e0677b38 disconnected. Starting 20s countdown.
+2026-07-21 11:50:35,259 - INFO - Player disconnected: a
+2026-07-21 11:50:35,259 - INFO - Player in room e0677b38 disconnected. Starting 20s countdown.

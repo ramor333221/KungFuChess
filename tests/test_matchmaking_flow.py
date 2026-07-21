@@ -4,7 +4,7 @@ import unittest
 from unittest.mock import AsyncMock
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from application.sockets.game_server import GameServer
+from src.application import GameServer
 
 
 class TestMatchmakingFlow(unittest.IsolatedAsyncioTestCase):

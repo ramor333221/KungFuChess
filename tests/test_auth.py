@@ -5,7 +5,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from DB.db_manager import DBManager
-from application.auth.auth_handler import AuthHandler
+from src.application import AuthHandler
 from config.constants import DB_NAME
 
 class MockAuthHandler(AuthHandler):

@@ -1,6 +1,6 @@
 import asyncio
 import websockets
-from application.sockets.game_server import GameServer
+from src.application.sockets.game_server import GameServer
 
 
 async def run_server():

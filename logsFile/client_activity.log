@@ -1,0 +1,50 @@
+2026-07-21 11:49:55,134 - INFO - BoardController initialized successfully (Window deferred).
+2026-07-21 11:50:02,229 - INFO - Received server message type: START
+2026-07-21 11:50:02,229 - INFO - Game started in room e0677b38 as black
+2026-07-21 11:50:03,732 - INFO - BoardController initialized successfully (Window deferred).
+2026-07-21 11:50:03,827 - INFO - Received server message type: START
+2026-07-21 11:50:03,828 - INFO - Game started in room e0677b38 as white
+2026-07-21 11:50:07,213 - INFO - Piece selected at row 1, col 2
+2026-07-21 11:50:07,693 - INFO - Move completed event processed: {'data': 'click 1 2 3 2'}
+2026-07-21 11:50:07,713 - INFO - Executed move command locally: click 1 2 3 2
+2026-07-21 11:50:07,713 - INFO - Transmitted move over WebSocket.
+2026-07-21 11:50:07,739 - INFO - Received server message type: MOVE
+2026-07-21 11:50:07,739 - INFO - Processing remote move from opponent: click 1 2 3 2
+2026-07-21 11:50:07,740 - INFO - Move completed event processed: {'data': 'click 1 2 3 2'}
+2026-07-21 11:50:10,859 - INFO - Piece selected at row 6, col 4
+2026-07-21 11:50:11,351 - INFO - Move completed event processed: {'data': 'click 6 4 4 4'}
+2026-07-21 11:50:11,352 - INFO - Executed move command locally: click 6 4 4 4
+2026-07-21 11:50:11,352 - INFO - Transmitted move over WebSocket.
+2026-07-21 11:50:11,359 - INFO - Received server message type: MOVE
+2026-07-21 11:50:11,359 - INFO - Processing remote move from opponent: click 6 4 4 4
+2026-07-21 11:50:11,360 - INFO - Move completed event processed: {'data': 'click 6 4 4 4'}
+2026-07-21 11:50:13,740 - INFO - Piece selected at row 4, col 4
+2026-07-21 11:50:14,129 - INFO - Move completed event processed: {'data': 'click 4 4 3 4'}
+2026-07-21 11:50:14,129 - INFO - Executed move command locally: click 4 4 3 4
+2026-07-21 11:50:14,129 - INFO - Transmitted move over WebSocket.
+2026-07-21 11:50:14,130 - INFO - Received server message type: MOVE
+2026-07-21 11:50:14,130 - INFO - Processing remote move from opponent: click 4 4 3 4
+2026-07-21 11:50:14,130 - INFO - Move completed event processed: {'data': 'click 4 4 3 4'}
+2026-07-21 11:50:15,502 - INFO - Piece selected at row 3, col 4
+2026-07-21 11:50:15,981 - INFO - Move completed event processed: {'data': 'click 3 4 2 4'}
+2026-07-21 11:50:15,981 - INFO - Executed move command locally: click 3 4 2 4
+2026-07-21 11:50:15,981 - INFO - Transmitted move over WebSocket.
+2026-07-21 11:50:15,991 - INFO - Received server message type: MOVE
+2026-07-21 11:50:15,991 - INFO - Processing remote move from opponent: click 3 4 2 4
+2026-07-21 11:50:15,991 - INFO - Move completed event processed: {'data': 'click 3 4 2 4'}
+2026-07-21 11:50:17,375 - INFO - Piece selected at row 2, col 4
+2026-07-21 11:50:18,117 - INFO - Move completed event processed: {'data': 'click 2 4 1 5'}
+2026-07-21 11:50:18,118 - INFO - Executed move command locally: click 2 4 1 5
+2026-07-21 11:50:18,118 - INFO - Transmitted move over WebSocket.
+2026-07-21 11:50:18,130 - INFO - Received server message type: MOVE
+2026-07-21 11:50:18,130 - INFO - Processing remote move from opponent: click 2 4 1 5
+2026-07-21 11:50:18,130 - INFO - Move completed event processed: {'data': 'click 2 4 1 5'}
+2026-07-21 11:50:19,583 - INFO - Piece selected at row 1, col 5
+2026-07-21 11:50:20,287 - INFO - Move completed event processed: {'data': 'click 1 5 0 4'}
+2026-07-21 11:50:20,287 - INFO - Executed move command locally: click 1 5 0 4
+2026-07-21 11:50:20,287 - INFO - Transmitted move over WebSocket.
+2026-07-21 11:50:20,289 - INFO - Received server message type: MOVE
+2026-07-21 11:50:20,289 - INFO - Processing remote move from opponent: click 1 5 0 4
+2026-07-21 11:50:20,289 - INFO - Move completed event processed: {'data': 'click 1 5 0 4'}
+2026-07-21 11:50:30,718 - INFO - Received server message type: OPPONENT_DISCONNECTED
+2026-07-21 11:50:30,718 - WARNING - Opponent disconnected! Starting local visual countdown.

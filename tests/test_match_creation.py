@@ -1,6 +1,6 @@
 import unittest
 
-from application.sockets.game_server import GameServer
+from src.application import GameServer
 
 
 class TestMatchCreation(unittest.IsolatedAsyncioTestCase):

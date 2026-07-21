@@ -118,3 +118,5 @@ PLAYER_BLACK = "Black"
 
 # Database
 DB_NAME = "chess_scores.db"
+EVENT_MOVE_COMPLETED = "move_completed"
+EVENT_GAME_OVER = "game_over"

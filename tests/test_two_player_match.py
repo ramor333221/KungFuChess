@@ -1,7 +1,7 @@
 import unittest
 import asyncio
 
-from application.sockets.game_server import GameServer
+from src.application import GameServer
 
 
 class TestTwoPlayerMatch(unittest.IsolatedAsyncioTestCase):

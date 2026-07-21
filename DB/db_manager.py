@@ -1,63 +1,76 @@
 import sqlite3
+from pathlib import Path
+
 from config.constants import DB_NAME
 
 
 class DBManager:
-    """Handles centralized database operations for users and scores."""
-
     def __init__(self):
-        self._initialize_tables()
+        # Set up the path inside the 'data' directory
+        self.data_dir = Path("data")
+        self.data_dir.mkdir(parents=True, exist_ok=True)
+        self.db_path = str(self.data_dir / DB_NAME)
 
-    def _initialize_tables(self):
-        """Creates tables for users and match history."""
-        with sqlite3.connect(DB_NAME) as conn:
+        self._create_table()
+
+    def _create_table(self):
+        """Creates the players table with password and score columns."""
+        with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
-                         CREATE TABLE IF NOT EXISTS users
+                         CREATE TABLE IF NOT EXISTS players
                          (
-                             id
-                             INTEGER
-                             PRIMARY
-                             KEY
-                             AUTOINCREMENT,
                              username
                              TEXT
-                             UNIQUE,
+                             PRIMARY
+                             KEY,
                              password
                              TEXT,
-                             elo
+                             score
                              INTEGER
-                             DEFAULT
-                             1200
                          )
                          """)
-            conn.execute("""
-                         CREATE TABLE IF NOT EXISTS matches
-                         (
-                             id
-                             INTEGER
-                             PRIMARY
-                             KEY
-                             AUTOINCREMENT,
-                             winner_name
-                             TEXT,
-                             loser_name
-                             TEXT,
-                             timestamp
-                             DATETIME
-                             DEFAULT
-                             CURRENT_TIMESTAMP
-                         )
-                         """)
-            conn.commit()
 
-    def update_user_elo(self, username, new_elo):
-        """Updates the ELO rating for a specific user."""
-        with sqlite3.connect(DB_NAME) as conn:
-            conn.execute("UPDATE users SET elo = ? WHERE username = ?", (new_elo, username))
-            conn.commit()
+    def save_player_record(self, username, score, password=None):
+        """
+        Saves or updates a player's record.
+        Includes password field if a new user is created.
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            if password:
+                conn.execute("""
+                             INSERT
+                             OR IGNORE INTO players (username, password, score) VALUES (?, ?, ?)
+                             """, (username, password, score))
+            else:
+                conn.execute("""
+                             UPDATE players
+                             SET score = ?
+                             WHERE username = ?
+                             """, (score, username))
+
+    def get_player_score(self, username):
+        """Retrieves the current score for a specific player."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT score FROM players WHERE username = ?", (username,))
+            result = cursor.fetchone()
+            return result[0] if result else 1200
+
+    def calculate_new_scores(self, winner_username, loser_username):
+        """Calculates and updates score for the winner based on ELO ratio, leaving loser score unchanged."""
+        winner_score = self.get_player_score(winner_username)
+        loser_score = self.get_player_score(loser_username)
+
+        score_diff = loser_score - winner_score
+        gain = max(5, 10 + (score_diff // 2))
+
+        self.save_player_record(winner_username, winner_score + gain)
+
+        print(f"DEBUG: Winner {winner_username} updated with +{gain} points. Loser {loser_username} score unchanged.")
 
     def get_user_data(self, username):
-        """Retrieves user info, including ELO."""
-        with sqlite3.connect(DB_NAME) as conn:
-            cursor = conn.execute("SELECT password, elo FROM users WHERE username = ?", (username,))
+        """Retrieves password and score for authentication."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT password, score FROM players WHERE username = ?", (username,))
             return cursor.fetchone()
