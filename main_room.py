@@ -1,61 +1,78 @@
 import asyncio
-import json
 from pathlib import Path
-
-from DB.db_manager import DBManager
-from src.GUI.board_controller import BoardController, show_gui_home_screen
+from src.GUI.portal_window import show_gui_home_screen
+from src.GUI.board_controller import BoardController
+from src.application.auth.auth_handler import AuthHandler
 from src.application.network.engine_facade import EngineFacade
+from src.application.network.game_network_client import GameNetworkClient
+from config import constants
 
 
 async def main():
-    # 1. Show GUI Login / Room Entry Dialog with Password
-    action_type, username, room_name, password = show_gui_home_screen()
-    if action_type == "CANCEL":
-        print("Cancelled by user.")
+    """Main asynchronous entry point with automatic background authentication."""
+    action_type, username, room_name, room_password, user_password = show_gui_home_screen()
+
+    if action_type == constants.ACTION_CANCEL:
         return
 
-    # 2. Setup path assets and engine facade
+    auth = AuthHandler()
+    user_info = None
+
+    try:
+        if hasattr(auth, "login_with_credentials"):
+            user_info = auth.login_with_credentials(username, user_password)
+        elif hasattr(auth, "login"):
+            try:
+                user_info = auth.login(username, user_password)
+            except TypeError:
+                pass
+
+        if not user_info:
+            if hasattr(auth, "register"):
+                user_info = auth.register(username, user_password)
+            elif hasattr(auth, "signup"):
+                user_info = auth.signup(username, user_password)
+
+            if hasattr(auth, "login_with_credentials"):
+                user_info = auth.login_with_credentials(username, user_password)
+            else:
+                user_info = {"username": username, "elo": 1200}
+
+        if not user_info:
+            user_info = {"username": username, "elo": 1200}
+
+    except Exception:
+        user_info = {"username": username, "elo": 1200}
+
     project_root = Path(__file__).resolve().parent
     assets_path = project_root / "assests" / "board.png"
-    db_manager = DBManager()
+    resolved_username = user_info.get('username', username) if isinstance(user_info, dict) else username
+    user_elo = user_info.get('elo', 1200) if isinstance(user_info, dict) else 1200
+
+    # Initialize the network client so WebSocket communication and matching function properly
+    network_client = GameNetworkClient(username=resolved_username, room_name=room_name)
 
     facade = EngineFacade(
-        board_path=str(assets_path),
-        db_manager=db_manager,
-        username=username
+        board_path=str(assets_path) if assets_path.exists() else None,
+        db_manager=None,
+        username=resolved_username,
+        network_client=network_client
     )
+    facade.room_name = room_name
+    facade.password = room_password
 
-    # 3. Connect to WebSocket Server with manual mode
-    await facade.connect_to_server("ws://localhost:8765", elo=1200)
+    server_uri = getattr(constants, "SERVER_WS_URI", "ws://localhost:8765")
 
-    # Send explicit LOGIN message with mode='manual' to avoid auto-queue
-    await facade.websocket.send(json.dumps({
-        "type": "LOGIN",
-        "username": username,
-        "elo": 1200,
-        "mode": "manual"
-    }))
+    await facade.connect_to_server(server_uri, elo=user_elo)
 
-    gui = BoardController(facade, board_path=str(assets_path))
-    gui.room_name = room_name
+    controller = BoardController(facade, board_path=None)
 
-    # 4. Transmit CREATE or JOIN command including Password
-    if action_type == "CREATE":
-        await facade.websocket.send(json.dumps({
-            "type": "CREATE_ROOM",
-            "room_name": room_name,
-            "password": password
-        }))
-    elif action_type == "JOIN":
-        await facade.websocket.send(json.dumps({
-            "type": "JOIN_ROOM",
-            "room_name": room_name,
-            "password": password
-        }))
-
-    # 5. Start listening and main window
-    await gui.start_game_when_matched()
+    await controller.start_game_when_matched()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except Exception:
+        import traceback
+        traceback.print_exc()

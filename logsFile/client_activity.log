@@ -319,3 +319,47 @@
 2026-07-21 23:57:54,187 - INFO - BoardController initialized successfully.
 2026-07-21 23:58:01,183 - INFO - Move completed: {'data': 'click 1 2 3 2'}
 2026-07-21 23:58:01,445 - INFO - BoardController initialized successfully.
+2026-07-22 09:48:02,516 - ERROR - Critical error in BoardController run_async loop: 'NoneType' object has no attribute 'capitalize'
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\ChessCTD\src\GUI\board_controller.py", line 202, in run_async
+    canvas = self.renderer.render(self.board_base.img, self.piece_animations, self.selected_square)
+  File "C:\Users\User\Downloads\ChessCTD\src\GUI\renderer.py", line 31, in render
+    self._draw_ui(canvas, board_w)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\ChessCTD\src\GUI\renderer.py", line 80, in _draw_ui
+    turn_text = f"My Color: {self.player_color.capitalize()}"
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'capitalize'
+2026-07-22 09:48:04,506 - ERROR - Critical error in BoardController run_async loop: 'NoneType' object has no attribute 'capitalize'
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\ChessCTD\src\GUI\board_controller.py", line 202, in run_async
+    canvas = self.renderer.render(self.board_base.img, self.piece_animations, self.selected_square)
+  File "C:\Users\User\Downloads\ChessCTD\src\GUI\renderer.py", line 31, in render
+    self._draw_ui(canvas, board_w)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\ChessCTD\src\GUI\renderer.py", line 80, in _draw_ui
+    turn_text = f"My Color: {self.player_color.capitalize()}"
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'capitalize'
+2026-07-22 09:50:40,040 - ERROR - Critical error in BoardController run_async loop: 'NoneType' object has no attribute 'capitalize'
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\ChessCTD\src\GUI\board_controller.py", line 202, in run_async
+    canvas = self.renderer.render(self.board_base.img, self.piece_animations, self.selected_square)
+  File "C:\Users\User\Downloads\ChessCTD\src\GUI\renderer.py", line 31, in render
+    self._draw_ui(canvas, board_w)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\ChessCTD\src\GUI\renderer.py", line 80, in _draw_ui
+    turn_text = f"My Color: {self.player_color.capitalize()}"
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'capitalize'
+2026-07-22 09:50:42,039 - ERROR - Critical error in BoardController run_async loop: 'NoneType' object has no attribute 'capitalize'
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\ChessCTD\src\GUI\board_controller.py", line 202, in run_async
+    canvas = self.renderer.render(self.board_base.img, self.piece_animations, self.selected_square)
+  File "C:\Users\User\Downloads\ChessCTD\src\GUI\renderer.py", line 31, in render
+    self._draw_ui(canvas, board_w)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\ChessCTD\src\GUI\renderer.py", line 80, in _draw_ui
+    turn_text = f"My Color: {self.player_color.capitalize()}"
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'capitalize'

@@ -1,6 +1,3 @@
-import json
-import websockets
-
 from config import constants
 from src.core.game_runner import GameRunner
 from src.utils.UI.img import Img
@@ -16,21 +13,16 @@ from src.utils.observer.sound_observer import SoundObserver
 class EngineFacade(Subject):
     """Facade class bridging the GUI with the game engine logic using the Observer pattern."""
 
-    def __init__(self, board_path, db_manager, board_matrix=None, player_color=None, username="Player", message_broker=None):
+    def __init__(self, board_path, db_manager, board_matrix=None, player_color=None, username="Player", network_client=None):
         super().__init__()
         self._runner = GameRunner()
         self.db_manager = db_manager
         self.username = username
+        self.network_client = network_client
         self.player_color = player_color
         self._board = board_matrix
         self.board_base = Img().read(board_path)
         self.mapper = BoardMapper(self.board_base.img)
-        self.websocket = None
-        self.opponent_username = "Unknown_Opponent"
-        self.broker = message_broker
-        self.room_name = None
-        self.on_server_message = None
-        self.on_opponent_disconnect = None
         self._runner.status.on_game_over = self._handle_game_end
 
         self.attach(ScoreObserver(self.db_manager))
@@ -43,28 +35,90 @@ class EngineFacade(Subject):
 
         self._runner.run_game(board_matrix, [])
 
-    async def connect_to_server(self, uri="ws://localhost:8765", elo=1200):
-        self.websocket = await websockets.connect(uri)
-        await self.websocket.send(json.dumps({
-            "type": "LOGIN",
-            "username": self.username,
-            "elo": elo
-        }))
+    @property
+    def websocket(self):
+        """Proxy property for network client websocket."""
+        return self.network_client.websocket if self.network_client else None
+
+    @websocket.setter
+    def websocket(self, value):
+        """Proxy setter for network client websocket."""
+        if self.network_client:
+            self.network_client.websocket = value
+
+    @property
+    def opponent_username(self):
+        """Proxy property for opponent username."""
+        return self.network_client.opponent_username if self.network_client else constants.UNKNOWN_OPPONENT
+
+    @opponent_username.setter
+    def opponent_username(self, value):
+        """Proxy setter for opponent username."""
+        if self.network_client:
+            self.network_client.opponent_username = value
+
+    @property
+    def room_name(self):
+        """Proxy property for room name."""
+        return self.network_client.room_name if self.network_client else None
+
+    @room_name.setter
+    def room_name(self, value):
+        """Proxy setter for room name."""
+        if self.network_client:
+            self.network_client.room_name = value
+
+    @property
+    def broker(self):
+        """Proxy property for message broker."""
+        return self.network_client.broker if self.network_client else None
+
+    @property
+    def on_server_message(self):
+        """Proxy property for server message handler."""
+        return self.network_client.on_server_message if self.network_client else None
+
+    @on_server_message.setter
+    def on_server_message(self, value):
+        """Proxy setter for server message handler."""
+        if self.network_client:
+            self.network_client.on_server_message = value
+
+    @property
+    def on_opponent_disconnect(self):
+        """Proxy property for opponent disconnect handler."""
+        return self.network_client.on_opponent_disconnect if self.network_client else None
+
+    @on_opponent_disconnect.setter
+    def on_opponent_disconnect(self, value):
+        """Proxy setter for opponent disconnect handler."""
+        if self.network_client:
+            self.network_client.on_opponent_disconnect = value
+
+    @property
+    def player_color(self):
+        """Proxy property for player color."""
+        return self.network_client.player_color if self.network_client else self._player_color
+
+    @player_color.setter
+    def player_color(self, value):
+        """Proxy setter for player color."""
+        if self.network_client:
+            self.network_client.player_color = value
+        self._player_color = value
+
+    async def connect_to_server(self, uri=constants.DEFAULT_WS_URI, elo=constants.DEFAULT_ELO):
+        """Connect to the server via the network client."""
+        if self.network_client:
+            await self.network_client.connect_to_server(uri, elo)
 
     async def send_move(self, move_data):
-        if self.websocket:
-            payload = {
-                "type": "MOVE",
-                "data": move_data
-            }
-            if self.room_name:
-                payload["room_name"] = self.room_name
-            await self.websocket.send(json.dumps(payload))
-
-        if self.broker:
-            await self.broker.publish(constants.TOPIC_PLAYER_MOVE, move_data)
+        """Send a move via the network client."""
+        if self.network_client:
+            await self.network_client.send_move(move_data)
 
     def process_move(self, command_str):
+        """Process a game move command and notify observers."""
         parts = command_str.split()
         if not parts:
             return None
@@ -75,9 +129,9 @@ class EngineFacade(Subject):
             board_matrix = self.get_board_data()
             piece_code = board_matrix[from_r][from_c]
 
-            if piece_code and "W" in piece_code:
+            if piece_code and constants.PIECE_WHITE_INDICATOR in piece_code:
                 player_id = constants.PLAYER_WHITE
-            elif piece_code and "B" in piece_code:
+            elif piece_code and constants.PIECE_BLACK_INDICATOR in piece_code:
                 player_id = constants.PLAYER_BLACK
             else:
                 player_id = self._runner.status.current_turn
@@ -87,12 +141,13 @@ class EngineFacade(Subject):
         self._runner.status.add_history(player_id, command_str)
         result = self._runner.interaction_ctrl.execute_command(parts[0], parts[1:])
 
-        if not getattr(self._runner.status, 'game_over', False):
+        if not getattr(self._runner.status, constants.ATTR_GAME_OVER, False):
             self.notify(constants.EVENT_MOVE_COMPLETED, {"data": command_str})
 
         return result
 
     def _handle_game_end(self):
+        """Handle game over event and notify observers of winner and loser."""
         winner = self._runner.status.winner
         is_winner = str(winner).lower() == str(self.player_color).lower()
         winner_name = self.username if is_winner else self.opponent_username
@@ -105,29 +160,37 @@ class EngineFacade(Subject):
             })
 
     def get_board_data(self):
+        """Retrieve the current board matrix data."""
         if hasattr(self._runner, 'board') and self._runner.board is not None:
             return self._runner.board.matrix
         return [[None for _ in range(constants.BOARD_SIZE)] for _ in range(constants.BOARD_SIZE)]
 
     def get_valid_moves(self, row, col):
+        """Get valid move coordinates for a piece at given row and column."""
         return self._runner.get_possible_moves(row, col)
 
     def get_game_over_status(self):
-        return getattr(self._runner.status, 'game_over', False)
+        """Return whether the game is over."""
+        return getattr(self._runner.status, constants.ATTR_GAME_OVER, False)
 
     def switch_player_turn(self):
+        """Switch the active player turn."""
         self._runner.status.selected_pos = None
         self._runner.status.switch_turn()
 
     async def initialize_broker_listeners(self):
-        if self.broker:
-            await self.broker.subscribe(constants.TOPIC_OPPONENT_MOVE, self._handle_remote_move)
+        """Initialize broker event listeners via network client."""
+        if self.network_client:
+            self.network_client.on_remote_move = self._handle_remote_move
+            await self.network_client.initialize_broker_listeners()
 
     async def _handle_remote_move(self, move_data):
+        """Handle remote move received from network client."""
         if move_data:
             self.process_move(move_data)
 
     def reset_game(self):
+        """Reset the game state to initial layout and values."""
         self._runner.status.game_over = False
         self._runner.status.winner = None
         self._runner.status.current_turn = constants.PLAYER_WHITE
@@ -144,52 +207,19 @@ class EngineFacade(Subject):
         if hasattr(self._runner.status, 'piece_states'):
             self._runner.status.piece_states.clear()
 
+    def set_game_winner(self, winner):
+        """Set the winner and trigger observer notifications for game end."""
+        self._runner.status.game_over = True
+        self._runner.status.winner = winner
+        self._handle_game_end()
+
     async def wait_for_match_and_listen(self, on_start_callback):
-        if not self.websocket:
-            return
-
-        try:
-            async for message in self.websocket:
-                if message is None:
-                    continue
-
-                data = json.loads(message)
-                msg_type = data.get('type')
-
-                if msg_type == 'START':
-                    self.player_color = data.get('color')
-                    self.opponent_username = data.get('opponent', "Unknown_Opponent")
-                    room_id = data.get('room') or data.get('room_name')
-                    self.room_name = room_id
-
-                    await on_start_callback(room_id)
-                    break
-        except Exception:
-            if self.on_opponent_disconnect:
-                self.on_opponent_disconnect()
+        """Wait for match start signal via network client."""
+        if self.network_client:
+            await self.network_client.wait_for_match_and_listen(on_start_callback)
 
     async def listen_for_server_messages(self):
-        if not self.websocket:
-            return
-
-        try:
-            async for message in self.websocket:
-                if message is None:
-                    continue
-
-                data = json.loads(message)
-                msg_type = data.get('type')
-
-                if self.on_server_message:
-                    self.on_server_message(data)
-
-                if msg_type == 'MOVE':
-                    if self.broker:
-                        await self.broker.publish(constants.TOPIC_OPPONENT_MOVE, data.get('data'))
-                elif msg_type in ('OPPONENT_DISCONNECTED', 'DISCONNECT'):
-                    if self.on_opponent_disconnect:
-                        self.on_opponent_disconnect()
-
-        except Exception:
-            if self.on_opponent_disconnect:
-                self.on_opponent_disconnect()
+        """Listen for server messages via network client."""
+        if self.network_client:
+            self.network_client.on_win_by_timeout = self.set_game_winner
+            await self.network_client.listen_for_server_messages()
