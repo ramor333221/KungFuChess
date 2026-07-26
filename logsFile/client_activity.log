@@ -1,0 +1,30 @@
+2026-07-26 10:01:15,999 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 10:01:23,042 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-26 10:25:26,015 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 10:25:31,515 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-26 10:25:52,986 - INFO - Connected to server at ws://localhost:8765 as Player1
+2026-07-26 10:26:06,886 - INFO - Connected to server at ws://localhost:8765 as Player2
+2026-07-26 10:26:37,920 - ERROR - Critical unexpected error in message listener loop: 'NoneType' object has no attribute 'calculate_new_scores'
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\application\network\game_network_client.py", line 166, in listen_for_server_messages
+    self.on_win_by_timeout(self.player_color)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\application\network\engine_facade.py", line 214, in set_game_winner
+    self._handle_game_end()
+    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\application\network\engine_facade.py", line 157, in _handle_game_end
+    self.notify(constants.EVENT_GAME_OVER, {
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        "winner_name": winner_name,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        "loser_name": loser_name
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    })
+    ^^
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\utils\observer\observer.py", line 14, in notify
+    observer.update(event, data)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\utils\observer\score_observer.py", line 14, in update
+    self.db.calculate_new_scores(winner, loser)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'calculate_new_scores'

@@ -185,7 +185,7 @@ class EngineFacade(Subject):
             await self.network_client.initialize_broker_listeners()
 
     async def _handle_remote_move(self, move_data):
-        """Handle remote move received from network client."""
+        """Handle remote move received from a network client."""
         if move_data:
             self.process_move(move_data)
 
@@ -214,7 +214,7 @@ class EngineFacade(Subject):
         self._handle_game_end()
 
     async def wait_for_match_and_listen(self, on_start_callback):
-        """Wait for match start signal via network client."""
+        """Wait for match start signal via a network client."""
         if self.network_client:
             await self.network_client.wait_for_match_and_listen(on_start_callback)
 
