@@ -1,6 +1,5 @@
 import pygame
 from pathlib import Path
-from config import constants
 from src.utils.observer.observer import Observer
 from src.utils.logger.logger import setup_logger
 
@@ -10,45 +9,41 @@ if not pygame.mixer.get_init():
     pygame.mixer.init()
 
 
-class SoundObserver(Observer):
-    """Observer responsible for playing different audio effects based on game events."""
+def _load_sound_file(filename: str):
+    project_root = Path(__file__).resolve().parent.parent.parent.parent
+    sound_path = project_root / "assests" / filename
+    if sound_path.exists():
+        sound_logger.info(f"Loaded sound file: {filename}")
+        return pygame.mixer.Sound(str(sound_path))
+    sound_logger.warning(f"Sound file not found at: {sound_path}")
+    return None
+
+
+class MoveSoundObserver(Observer):
+    """Observer responsible exclusively for playing move and capture sound effects."""
 
     def __init__(self):
-        project_root = Path(__file__).resolve().parent.parent.parent.parent
-        assets_dir = project_root / "assests"
+        self.move_sound = _load_sound_file("move.wav")
+        self.capture_sound = _load_sound_file("capture.wav")
 
-        self.sounds = {}
+    def update(self, data):
+        is_capture = data.get("is_capture", False) if isinstance(data, dict) else False
 
-        sound_files = {
-            "move": "move.wav",
-            "capture": "capture.wav",
-            "game_over": "game_over.wav"
-        }
+        if is_capture and self.capture_sound:
+            self.capture_sound.play()
+            sound_logger.info("Played capture sound effect.")
+        elif self.move_sound:
+            self.move_sound.play()
+            sound_logger.info("Played move sound effect.")
 
-        for key, filename in sound_files.items():
-            sound_path = assets_dir / filename
-            try:
-                if sound_path.exists():
-                    self.sounds[key] = pygame.mixer.Sound(str(sound_path))
-                    sound_logger.info(f"Loaded sound file: {filename}")
-                else:
-                    sound_logger.warning(f"Sound file not found at: {sound_path}")
-            except Exception as e:
-                sound_logger.warning(f"Could not load sound file {filename}: {e}")
 
-    def update(self, event, data):
-        """Triggers specific sound playback based on received game events."""
-        if event == constants.EVENT_MOVE_COMPLETED:
-            is_capture = data.get("is_capture", False) if isinstance(data, dict) else False
+class GameOverSoundObserver(Observer):
+    """Observer responsible exclusively for playing game over sound effects."""
 
-            if is_capture and "capture" in self.sounds:
-                self.sounds["capture"].play()
-                sound_logger.info("Played capture sound effect.")
-            elif "move" in self.sounds:
-                self.sounds["move"].play()
-                sound_logger.info("Played move sound effect.")
+    def __init__(self):
+        self.game_over_sound = _load_sound_file("game_over.wav")
 
-        elif event == constants.EVENT_GAME_OVER:
-            if "game_over" in self.sounds:
-                self.sounds["game_over"].play()
-                sound_logger.info("Played game over sound effect.")
+    def update(self, data):
+        if self.game_over_sound:
+            self.game_over_sound.play()
+            sound_logger.info("Played game over sound effect.")

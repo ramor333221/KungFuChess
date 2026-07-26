@@ -6,8 +6,8 @@ from src.utils.observer.achievement_observer import AchievementObserver
 from src.utils.observer.move_observer import MoveLoggerObserver
 from src.utils.observer.observer import Subject
 from src.utils.observer.score_observer import ScoreObserver
-from src.utils.observer.sound_observer import SoundObserver
 from shared.domain import MoveCommand
+from src.utils.observer.sound_observer import GameOverSoundObserver, MoveSoundObserver
 
 
 class EngineFacade(Subject):
@@ -24,11 +24,11 @@ class EngineFacade(Subject):
 
         self._runner.status.on_game_over = self._handle_game_end
 
-        # Attach observers
-        self.attach(ScoreObserver(self.db_manager))
-        self.attach(MoveLoggerObserver())
-        self.attach(AchievementObserver())
-        self.attach(SoundObserver())
+        self.attach(constants.EVENT_GAME_OVER, ScoreObserver(self.db_manager))
+        self.attach(constants.EVENT_MOVE_COMPLETED, MoveLoggerObserver())
+        self.attach(constants.EVENT_GAME_OVER, AchievementObserver())
+        self.attach(constants.EVENT_MOVE_COMPLETED, MoveSoundObserver())
+        self.attach(constants.EVENT_GAME_OVER, GameOverSoundObserver())
 
         if board_matrix is None:
             board_matrix = BoardFactory.get_default_layout()

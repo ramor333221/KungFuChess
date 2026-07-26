@@ -1,20 +1,22 @@
 class Subject:
-    """Manages local observers and notifies them of synchronous state changes."""
+    """Manages local observers grouped by event type to eliminate event type if/else checks."""
     def __init__(self):
-        self._observers = []
+        self._observers_by_event = {}
 
-    def attach(self, observer):
-        """Register a new observer to the subject."""
-        if observer not in self._observers:
-            self._observers.append(observer)
+    def attach(self, event, observer):
+        """Register a new observer for a specific event type."""
+        if event not in self._observers_by_event:
+            self._observers_by_event[event] = []
+        if observer not in self._observers_by_event[event]:
+            self._observers_by_event[event].append(observer)
 
     def notify(self, event, data=None):
-        """Notify all registered local observers about an event."""
-        for observer in self._observers:
-            observer.update(event, data)
+        """Notify only the observers registered for this specific event."""
+        for observer in self._observers_by_event.get(event, []):
+            observer.update(data)
 
 class Observer:
     """Interface for local objects that listen to Subject updates."""
-    def update(self, event, data):
-        """Process a local update event."""
+    def update(self, data):
+        """Process update data directly without needing event conditionals."""
         raise NotImplementedError

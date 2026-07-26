@@ -7,24 +7,23 @@ from config.constants import ASSETS_PATH
 from shared.domain import MoveCommand
 from src.GUI.input_handler import InputHandler
 from src.GUI.renderer import Renderer
+from src.GUI.game_event_coordinator import GameEventCoordinator
 from src.utils.UI.img import Img
 from src.utils.input.board_mapper import BoardMapper
 from src.utils.logger.logger import setup_logger
-from src.utils.observer.observer import Observer
 
 client_logger = setup_logger("ClientLogger", "client_activity.log")
 
 
-class BoardController(Observer):
-    """Manages game GUI, room state, disconnect timers, and server messages (Agnostic of asset folder names)."""
+class BoardController:
+    """Manages game GUI, room state, window lifecycle, and rendering (Strictly decoupled from network messages)."""
 
     def __init__(self, facade, board_path: str = None):
         self.facade = facade
         self.player_color = facade.player_color
-        self.facade.attach(self)
 
-        self.facade.on_server_message = self.handle_server_message
-        self.facade.on_opponent_disconnect = self.handle_opponent_disconnection
+        # Delegate network events to the coordinator class
+        self.event_coordinator = GameEventCoordinator(facade, self)
 
         self.project_root = Path(__file__).resolve().parent.parent.parent
 
@@ -39,7 +38,6 @@ class BoardController(Observer):
         self._disconnect_timer_ms = 0
         self.win_message = None
 
-        # Renderer handles all asset loading internally
         self.renderer = Renderer(facade, player_color=self.player_color)
         self.piece_animations = self.renderer.piece_animations
 
@@ -48,54 +46,6 @@ class BoardController(Observer):
             renderer=self.renderer,
             on_board_click=self.handle_click
         )
-
-    def update(self, event, data):
-        """Handle observer updates from facade/runner."""
-        if event == constants.EVENT_MOVE_COMPLETED:
-            self.selected_square = None
-
-    def handle_server_message(self, message_data: dict):
-        """Handle incoming server messages and update room/player state safely."""
-        try:
-            msg_type = message_data.get('type')
-
-            if msg_type == constants.MSG_TYPE_ROOM_CREATED:
-                self.room_name = message_data.get('room_name')
-                self.facade.room_name = self.room_name
-                self.player_color = message_data.get('color', constants.COLOR_WHITE)
-
-            elif msg_type == constants.MSG_TYPE_START:
-                self.room_name = message_data.get('room_name') or message_data.get('room')
-                self.facade.room_name = self.room_name
-                self.player_color = message_data.get('color', self.player_color)
-                self.renderer.player_color = self.player_color
-
-            elif msg_type == constants.MSG_TYPE_START_VIEWER:
-                self.room_name = message_data.get('room_name') or message_data.get('room')
-                self.facade.room_name = self.room_name
-                self.player_color = constants.COLOR_VIEWER
-
-            elif msg_type == constants.MSG_TYPE_MOVE:
-                move_data = message_data.get('data')
-                if move_data:
-                    if isinstance(move_data, dict):
-                        move_command = MoveCommand(**move_data)
-                    elif isinstance(move_data, MoveCommand):
-                        move_command = move_data
-                    else:
-                        move_command = None
-
-                    if move_command:
-                        client_logger.info(f"Processing remote move: {move_command}")
-                        self.facade.process_move(move_command)
-        except Exception as e:
-            client_logger.error(f"Error handling server message {message_data}: {e}", exc_info=True)
-
-    def handle_opponent_disconnection(self):
-        """Initialize disconnect countdown timer when opponent disconnects."""
-        if self.disconnect_countdown is None:
-            self.disconnect_countdown = constants.DEFAULT_DISCONNECT_COUNTDOWN
-            self._disconnect_timer_ms = 0
 
     def _handle_move_execution(self, row, col):
         """Execute a piece move if valid using a strongly-typed MoveCommand and send over network."""
@@ -110,7 +60,6 @@ class BoardController(Observer):
             )
             self.facade.process_move(move_command)
 
-            # Fixed: Check network_client directly to safely trigger network transmission
             if self.facade.network_client:
                 asyncio.create_task(self.facade.send_move(move_command))
 
@@ -213,7 +162,8 @@ class BoardController(Observer):
                         self.facade.set_game_winner(self.player_color)
 
                 if self.disconnect_countdown == constants.DISCONNECT_INACTIVE_STATE and self.win_message:
-                    canvas = self.renderer.render(self.board_base.img, self.renderer.piece_animations, self.selected_square)
+                    canvas = self.renderer.render(self.board_base.img, self.renderer.piece_animations,
+                                                  self.selected_square)
                     img_canvas = canvas.img if hasattr(canvas, 'img') else canvas
                     cv2.putText(
                         img_canvas,
