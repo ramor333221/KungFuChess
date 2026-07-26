@@ -36,7 +36,6 @@ async def run_client_application(username=None, password=None, room_name=None, r
     if room_name:
         facade.room_name = room_name
         facade.password = room_password
-
     try:
         await facade.connect_to_server(DEFAULT_WS_URI, elo=user_elo)
     except (WebSocketException, ConnectionRefusedError, OSError) as e:

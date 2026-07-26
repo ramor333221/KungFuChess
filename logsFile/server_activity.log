@@ -237,3 +237,48 @@
 2026-07-26 16:03:06,615 - INFO - Player disconnected: b
 2026-07-26 16:03:06,615 - INFO - Player in room 'Match_a_b' disconnected. Starting 20s countdown.
 2026-07-26 16:03:26,043 - INFO - Room 'Match_a_b' closed due to timeout. Opponent wins!
+2026-07-26 16:09:14,017 - INFO - Received message type 'LOGIN' from client.
+2026-07-26 16:09:14,017 - INFO - Player logged in: a (ELO: 1302, Mode: auto)
+2026-07-26 16:09:14,018 - INFO - Player a entered auto-matchmaking queue.
+2026-07-26 16:09:30,147 - INFO - Received message type 'LOGIN' from client.
+2026-07-26 16:09:30,147 - INFO - Player logged in: b (ELO: 1290, Mode: auto)
+2026-07-26 16:09:30,147 - INFO - Player b entered auto-matchmaking queue.
+2026-07-26 16:09:34,726 - INFO - Received message type 'MOVE' from client.
+2026-07-26 16:09:34,726 - INFO - MOVE command processed in room 'Match_a_b'
+2026-07-26 16:09:40,706 - ERROR - Connection error: no close frame received or sent
+2026-07-26 16:09:40,706 - INFO - Player disconnected: a
+2026-07-26 16:09:40,706 - INFO - Player in room 'Match_a_b' disconnected. Starting 20s countdown.
+2026-07-26 16:09:41,297 - ERROR - Connection error: no close frame received or sent
+2026-07-26 16:09:41,297 - INFO - Player disconnected: b
+2026-07-26 16:09:41,297 - INFO - Player in room 'Match_a_b' disconnected. Starting 20s countdown.
+2026-07-26 16:10:00,717 - INFO - Room 'Match_a_b' closed due to timeout. Opponent wins!
+2026-07-26 16:11:09,963 - INFO - Received message type 'LOGIN' from client.
+2026-07-26 16:11:09,963 - INFO - Player logged in: a (ELO: 1302, Mode: auto)
+2026-07-26 16:11:09,963 - INFO - Player a entered auto-matchmaking queue.
+2026-07-26 16:11:15,317 - INFO - Received message type 'LOGIN' from client.
+2026-07-26 16:11:15,317 - INFO - Player logged in: b (ELO: 1290, Mode: auto)
+2026-07-26 16:11:15,317 - INFO - Player b entered auto-matchmaking queue.
+2026-07-26 16:11:19,144 - INFO - Received message type 'MOVE' from client.
+2026-07-26 16:11:19,144 - INFO - MOVE command processed in room 'Match_a_b'
+2026-07-26 16:11:24,049 - ERROR - Connection error: no close frame received or sent
+2026-07-26 16:11:24,049 - INFO - Player disconnected: b
+2026-07-26 16:11:24,049 - INFO - Player in room 'Match_a_b' disconnected. Starting 20s countdown.
+2026-07-26 16:11:26,543 - ERROR - Connection error: no close frame received or sent
+2026-07-26 16:11:26,543 - INFO - Player disconnected: a
+2026-07-26 16:11:26,543 - INFO - Player in room 'Match_a_b' disconnected. Starting 20s countdown.
+2026-07-26 16:11:41,283 - INFO - Received message type 'LOGIN' from client.
+2026-07-26 16:11:41,283 - INFO - Player logged in: Player1 (ELO: 1200, Mode: auto)
+2026-07-26 16:11:41,283 - INFO - Player Player1 entered auto-matchmaking queue.
+2026-07-26 16:11:44,052 - INFO - Room 'Match_a_b' closed due to timeout. Opponent wins!
+2026-07-26 16:11:55,523 - INFO - Received message type 'LOGIN' from client.
+2026-07-26 16:11:55,523 - INFO - Player logged in: Player2 (ELO: 1210, Mode: auto)
+2026-07-26 16:11:55,523 - INFO - Player Player2 entered auto-matchmaking queue.
+2026-07-26 16:11:57,580 - INFO - Received message type 'MOVE' from client.
+2026-07-26 16:11:57,580 - INFO - MOVE command processed in room 'Match_Player1_Player2'
+2026-07-26 16:12:03,362 - ERROR - Connection error: no close frame received or sent
+2026-07-26 16:12:03,362 - INFO - Player disconnected: Player1
+2026-07-26 16:12:03,362 - INFO - Player in room 'Match_Player1_Player2' disconnected. Starting 20s countdown.
+2026-07-26 16:12:03,760 - ERROR - Connection error: no close frame received or sent
+2026-07-26 16:12:03,760 - INFO - Player disconnected: Player2
+2026-07-26 16:12:03,760 - INFO - Player in room 'Match_Player1_Player2' disconnected. Starting 20s countdown.
+2026-07-26 16:12:23,371 - INFO - Room 'Match_Player1_Player2' closed due to timeout. Opponent wins!

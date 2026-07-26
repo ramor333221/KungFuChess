@@ -1,65 +1,16 @@
 import asyncio
-import logging
-from pathlib import Path
-from websockets.exceptions import WebSocketException
-
-from config.constants import ASSETS_PATH, DEFAULT_ELO, DEFAULT_WS_URI
+from src.application.bootstrap import run_client_application
 from src.GUI.portal_window import show_gui_home_screen
-from src.GUI.board_controller import BoardController
-from src.application.auth.auth_handler import AuthHandler
-from src.application.network.engine_facade import EngineFacade
-from src.application.network.game_network_client import GameNetworkClient
-from config import constants
+from src.utils.logger.logger import setup_logger
 
-# Configure logging for the room client application
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-)
-logger = logging.getLogger("MainRoom")
-
-
-async def main():
-    """Main asynchronous entry point with clean authentication delegation, logging, and error handling."""
-    action_type, username, room_name, room_password, user_password = show_gui_home_screen()
-
-    if action_type == constants.ACTION_CANCEL:
-        return
-
-    auth = AuthHandler()
-    user_info = auth.authenticate_or_register(username, user_password, default_elo=DEFAULT_ELO)
-
-    resolved_username = user_info['username']
-    user_elo = user_info['elo']
-
-    network_client = GameNetworkClient(username=resolved_username, room_name=room_name)
-
-    facade = EngineFacade(
-        username=resolved_username,
-        network_client=network_client
-    )
-    facade.room_name = room_name
-    facade.password = room_password
-
-    try:
-        await facade.connect_to_server(DEFAULT_WS_URI, elo=user_elo)
-    except ConnectionRefusedError:
-        logger.error("Could not connect to the game server. Is it offline?")
-        return
-    except WebSocketException as ws_err:
-        logger.error(f"Network protocol error occurred: {ws_err}")
-        return
-    except Exception as unexpected_err:
-        logger.exception(f"An unexpected error occurred: {unexpected_err}")
-        raise
-
-    controller = BoardController(facade, board_path=None)
-
-    await controller.start_game_when_matched()
+logger = setup_logger("MainRoom", "client_activity.log")
 
 
 if __name__ == "__main__":
     try:
-        asyncio.run(main())
+        asyncio.run(run_client_application(
+            use_gui_auth=True,
+            gui_auth_callback=show_gui_home_screen
+        ))
     except Exception:
         logger.exception("Fatal error occurred in main room execution loop.")

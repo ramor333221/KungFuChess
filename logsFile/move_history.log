@@ -16,3 +16,7 @@
 2026-07-26 16:11:19,145 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
 2026-07-26 16:11:57,579 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
 2026-07-26 16:11:58,593 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 16:31:16,236 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 16:31:16,273 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 16:31:44,017 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 16:31:45,133 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
