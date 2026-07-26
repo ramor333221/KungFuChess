@@ -1,30 +1,107 @@
-2026-07-26 10:01:15,999 - INFO - Connected to server at ws://localhost:8765 as a
-2026-07-26 10:01:23,042 - INFO - Connected to server at ws://localhost:8765 as b
-2026-07-26 10:25:26,015 - INFO - Connected to server at ws://localhost:8765 as a
-2026-07-26 10:25:31,515 - INFO - Connected to server at ws://localhost:8765 as b
-2026-07-26 10:25:52,986 - INFO - Connected to server at ws://localhost:8765 as Player1
-2026-07-26 10:26:06,886 - INFO - Connected to server at ws://localhost:8765 as Player2
-2026-07-26 10:26:37,920 - ERROR - Critical unexpected error in message listener loop: 'NoneType' object has no attribute 'calculate_new_scores'
+2026-07-26 13:35:54,427 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 13:36:05,463 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-26 13:42:13,768 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 13:42:19,212 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-26 13:48:08,172 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 13:48:13,009 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-26 13:48:16,429 - INFO - Processing remote move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 13:48:27,388 - INFO - Processing remote move: MoveCommand(from_row=4, from_col=4, to_row=3, to_col=4)
+2026-07-26 14:09:53,749 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 14:12:22,525 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 14:12:29,351 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-26 14:16:55,200 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 14:17:59,524 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 14:18:04,430 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-26 14:19:35,550 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 14:19:40,304 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-26 14:19:40,328 - ERROR - Critical error in BoardController run_async loop: Renderer.render() missing 1 required positional argument: 'selected_square'
 Traceback (most recent call last):
-  File "C:\Users\User\Downloads\Kung Fu Chess\src\application\network\game_network_client.py", line 166, in listen_for_server_messages
-    self.on_win_by_timeout(self.player_color)
-    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\User\Downloads\Kung Fu Chess\src\application\network\engine_facade.py", line 214, in set_game_winner
-    self._handle_game_end()
-    ~~~~~~~~~~~~~~~~~~~~~^^
-  File "C:\Users\User\Downloads\Kung Fu Chess\src\application\network\engine_facade.py", line 157, in _handle_game_end
-    self.notify(constants.EVENT_GAME_OVER, {
-    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        "winner_name": winner_name,
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        "loser_name": loser_name
-        ^^^^^^^^^^^^^^^^^^^^^^^^
-    })
-    ^^
-  File "C:\Users\User\Downloads\Kung Fu Chess\src\utils\observer\observer.py", line 14, in notify
-    observer.update(event, data)
-    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
-  File "C:\Users\User\Downloads\Kung Fu Chess\src\utils\observer\score_observer.py", line 14, in update
-    self.db.calculate_new_scores(winner, loser)
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: 'NoneType' object has no attribute 'calculate_new_scores'
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\GUI\board_controller.py", line 227, in run_async
+    canvas = self.renderer.render(self.board_base.img, self.selected_square)
+TypeError: Renderer.render() missing 1 required positional argument: 'selected_square'
+2026-07-26 14:19:40,329 - ERROR - Critical error in BoardController run_async loop: Renderer.render() missing 1 required positional argument: 'selected_square'
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\GUI\board_controller.py", line 227, in run_async
+    canvas = self.renderer.render(self.board_base.img, self.selected_square)
+TypeError: Renderer.render() missing 1 required positional argument: 'selected_square'
+2026-07-26 14:19:40,334 - ERROR - Unexpected error in matchmaking listener: Renderer.render() missing 1 required positional argument: 'selected_square'
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\application\network\game_network_client.py", line 165, in wait_for_match_and_listen
+    await on_start_callback(self.room_name)
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\GUI\board_controller.py", line 181, in _on_match_started
+    await self.run_async()
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\GUI\board_controller.py", line 227, in run_async
+    canvas = self.renderer.render(self.board_base.img, self.selected_square)
+TypeError: Renderer.render() missing 1 required positional argument: 'selected_square'
+2026-07-26 14:19:40,334 - ERROR - Unexpected error in matchmaking listener: Renderer.render() missing 1 required positional argument: 'selected_square'
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\application\network\game_network_client.py", line 165, in wait_for_match_and_listen
+    await on_start_callback(self.room_name)
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\GUI\board_controller.py", line 181, in _on_match_started
+    await self.run_async()
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\GUI\board_controller.py", line 227, in run_async
+    canvas = self.renderer.render(self.board_base.img, self.selected_square)
+TypeError: Renderer.render() missing 1 required positional argument: 'selected_square'
+2026-07-26 14:20:00,219 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 14:20:07,643 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-26 14:20:07,666 - ERROR - Critical error in BoardController run_async loop: Renderer.render() missing 1 required positional argument: 'selected_square'
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\GUI\board_controller.py", line 227, in run_async
+    canvas = self.renderer.render(self.board_base.img, self.selected_square)
+TypeError: Renderer.render() missing 1 required positional argument: 'selected_square'
+2026-07-26 14:20:07,668 - ERROR - Critical error in BoardController run_async loop: Renderer.render() missing 1 required positional argument: 'selected_square'
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\GUI\board_controller.py", line 227, in run_async
+    canvas = self.renderer.render(self.board_base.img, self.selected_square)
+TypeError: Renderer.render() missing 1 required positional argument: 'selected_square'
+2026-07-26 14:20:07,670 - ERROR - Unexpected error in matchmaking listener: Renderer.render() missing 1 required positional argument: 'selected_square'
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\application\network\game_network_client.py", line 165, in wait_for_match_and_listen
+    await on_start_callback(self.room_name)
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\GUI\board_controller.py", line 181, in _on_match_started
+    await self.run_async()
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\GUI\board_controller.py", line 227, in run_async
+    canvas = self.renderer.render(self.board_base.img, self.selected_square)
+TypeError: Renderer.render() missing 1 required positional argument: 'selected_square'
+2026-07-26 14:20:07,672 - ERROR - Unexpected error in matchmaking listener: Renderer.render() missing 1 required positional argument: 'selected_square'
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\application\network\game_network_client.py", line 165, in wait_for_match_and_listen
+    await on_start_callback(self.room_name)
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\GUI\board_controller.py", line 181, in _on_match_started
+    await self.run_async()
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\GUI\board_controller.py", line 227, in run_async
+    canvas = self.renderer.render(self.board_base.img, self.selected_square)
+TypeError: Renderer.render() missing 1 required positional argument: 'selected_square'
+2026-07-26 14:21:12,963 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 14:21:18,636 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-26 14:23:22,241 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 14:23:28,685 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-26 14:26:35,664 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 14:26:40,516 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-26 14:37:42,113 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 14:37:48,524 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-26 14:39:07,891 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 14:40:51,375 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 14:43:06,274 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 14:43:15,753 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-26 14:44:28,521 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 14:44:46,587 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-26 14:46:00,883 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 14:46:09,590 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-26 14:51:22,200 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 14:51:27,458 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-26 14:57:19,596 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 14:57:24,471 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-26 14:57:27,627 - INFO - Processing remote move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 16:02:46,807 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 16:02:55,815 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-26 16:02:59,561 - INFO - Processing remote move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 16:09:14,017 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 16:09:30,147 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-26 16:09:34,728 - INFO - Processing remote move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 16:11:09,963 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-26 16:11:15,317 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-26 16:11:19,145 - INFO - Processing remote move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 16:11:41,283 - INFO - Connected to server at ws://localhost:8765 as Player1
+2026-07-26 16:11:55,523 - INFO - Connected to server at ws://localhost:8765 as Player2
+2026-07-26 16:11:58,592 - INFO - Processing remote move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)

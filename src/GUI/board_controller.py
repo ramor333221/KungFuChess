@@ -1,20 +1,22 @@
-import cv2
 import asyncio
 from pathlib import Path
+import cv2
 
+from config import constants
+from config.constants import ASSETS_PATH
+from shared.domain import MoveCommand
 from src.GUI.input_handler import InputHandler
 from src.GUI.renderer import Renderer
-from src.utils.UI.animation_manager import AnimationManager
 from src.utils.UI.img import Img
+from src.utils.input.board_mapper import BoardMapper
 from src.utils.logger.logger import setup_logger
 from src.utils.observer.observer import Observer
-from config import constants
 
 client_logger = setup_logger("ClientLogger", "client_activity.log")
 
 
 class BoardController(Observer):
-    """Manages game GUI, room state, disconnect timers, and server messages using Controller pattern."""
+    """Manages game GUI, room state, disconnect timers, and server messages (Agnostic of asset folder names)."""
 
     def __init__(self, facade, board_path: str = None):
         self.facade = facade
@@ -25,9 +27,11 @@ class BoardController(Observer):
         self.facade.on_opponent_disconnect = self.handle_opponent_disconnection
 
         self.project_root = Path(__file__).resolve().parent.parent.parent
-        self.board_base = self._load_board_image(board_path)
 
-        self.piece_animations = {}
+        self.board_base = self._load_board_image(board_path)
+        board_img = self.board_base.img if hasattr(self.board_base, 'img') else self.board_base
+        self.facade.mapper = BoardMapper(board_img)
+
         self.selected_square = None
         self.room_name = facade.room_name
 
@@ -35,18 +39,57 @@ class BoardController(Observer):
         self._disconnect_timer_ms = 0
         self.win_message = None
 
+        # Renderer handles all asset loading internally
         self.renderer = Renderer(facade, player_color=self.player_color)
+        self.piece_animations = self.renderer.piece_animations
+
         self.input_handler = InputHandler(
             facade=facade,
             renderer=self.renderer,
             on_board_click=self.handle_click
         )
 
-        self._load_animations()
-
     def update(self, event, data):
-        """Handle observer updates."""
-        pass
+        """Handle observer updates from facade/runner."""
+        if event == constants.EVENT_MOVE_COMPLETED:
+            self.selected_square = None
+
+    def handle_server_message(self, message_data: dict):
+        """Handle incoming server messages and update room/player state safely."""
+        try:
+            msg_type = message_data.get('type')
+
+            if msg_type == constants.MSG_TYPE_ROOM_CREATED:
+                self.room_name = message_data.get('room_name')
+                self.facade.room_name = self.room_name
+                self.player_color = message_data.get('color', constants.COLOR_WHITE)
+
+            elif msg_type == constants.MSG_TYPE_START:
+                self.room_name = message_data.get('room_name') or message_data.get('room')
+                self.facade.room_name = self.room_name
+                self.player_color = message_data.get('color', self.player_color)
+                self.renderer.player_color = self.player_color
+
+            elif msg_type == constants.MSG_TYPE_START_VIEWER:
+                self.room_name = message_data.get('room_name') or message_data.get('room')
+                self.facade.room_name = self.room_name
+                self.player_color = constants.COLOR_VIEWER
+
+            elif msg_type == constants.MSG_TYPE_MOVE:
+                move_data = message_data.get('data')
+                if move_data:
+                    if isinstance(move_data, dict):
+                        move_command = MoveCommand(**move_data)
+                    elif isinstance(move_data, MoveCommand):
+                        move_command = move_data
+                    else:
+                        move_command = None
+
+                    if move_command:
+                        client_logger.info(f"Processing remote move: {move_command}")
+                        self.facade.process_move(move_command)
+        except Exception as e:
+            client_logger.error(f"Error handling server message {message_data}: {e}", exc_info=True)
 
     def handle_opponent_disconnection(self):
         """Initialize disconnect countdown timer when opponent disconnects."""
@@ -55,56 +98,52 @@ class BoardController(Observer):
             self._disconnect_timer_ms = 0
 
     def _handle_move_execution(self, row, col):
-        """Execute a piece move if valid and send over network."""
+        """Execute a piece move if valid using a strongly-typed MoveCommand and send over network."""
         valid_moves = self.facade.get_valid_moves(self.selected_square[0], self.selected_square[1])
 
         if (row, col) in valid_moves:
-            move_cmd = f"click {self.selected_square[0]} {self.selected_square[1]} {row} {col}"
-            self.facade.process_move(move_cmd)
+            move_command = MoveCommand(
+                from_row=self.selected_square[0],
+                from_col=self.selected_square[1],
+                to_row=row,
+                to_col=col
+            )
+            self.facade.process_move(move_command)
 
-            if self.facade.websocket:
-                asyncio.create_task(self.facade.send_move(move_cmd))
+            # Fixed: Check network_client directly to safely trigger network transmission
+            if self.facade.network_client:
+                asyncio.create_task(self.facade.send_move(move_command))
 
         self.selected_square = None
 
-    def handle_server_message(self, message_data: dict):
-        """Handle incoming server messages and update room/player state."""
-        msg_type = message_data.get('type')
-
-        if msg_type == constants.MSG_TYPE_ROOM_CREATED:
-            self.room_name = message_data.get('room_name')
-            self.facade.room_name = self.room_name
-            self.player_color = message_data.get('color', constants.COLOR_WHITE)
-
-        elif msg_type == constants.MSG_TYPE_START:
-            self.room_name = message_data.get('room_name') or message_data.get('room')
-            self.facade.room_name = self.room_name
-            self.player_color = message_data.get('color', self.player_color)
-            self.renderer.player_color = self.player_color
-
-        elif msg_type == constants.MSG_TYPE_START_VIEWER:
-            self.room_name = message_data.get('room_name') or message_data.get('room')
-            self.facade.room_name = self.room_name
-            self.player_color = constants.COLOR_VIEWER
-
-        elif msg_type == constants.MSG_TYPE_MOVE:
-            move_data = message_data.get('data')
-            if move_data:
-                self.facade.process_move(move_data)
-
     def _initialize_window(self):
         """Initialize the OpenCV window and mouse callback handler."""
-        cv2.namedWindow("Main Board", cv2.WINDOW_NORMAL)
-        cv2.setMouseCallback("Main Board", self.input_handler.handle_event)
+        window_title = getattr(constants, 'WINDOW_NAME', 'Main Board')
+        cv2.namedWindow(window_title, cv2.WINDOW_NORMAL)
+        cv2.setMouseCallback(window_title, self.input_handler.handle_event)
 
     def _load_board_image(self, board_path):
-        """Load the chessboard background image."""
-        path = Path(board_path) if board_path else self.project_root / "assests" / "board.png"
+        """Load the chessboard background image using robust path resolution."""
+        if board_path:
+            path = Path(board_path)
+        elif ASSETS_PATH:
+            if ASSETS_PATH.is_file():
+                path = ASSETS_PATH
+            else:
+                path = ASSETS_PATH / "board.png"
+        else:
+            path = self.project_root / "assests" / "board.png"
+
+        if not path.exists():
+            alt_path = self.project_root / "assests" / "board.png"
+            if alt_path.exists():
+                path = alt_path
+
         return Img().read(path)
 
     def handle_click(self, row, col):
         """Handle mouse click events on the board squares."""
-        if self.disconnect_countdown is not None and self.disconnect_countdown != -1:
+        if self.disconnect_countdown is not None and self.disconnect_countdown != constants.DISCONNECT_INACTIVE_STATE:
             return
 
         if self.player_color == constants.COLOR_BLACK:
@@ -129,18 +168,6 @@ class BoardController(Observer):
             return True
         return False
 
-    def _load_animations(self):
-        """Load animated piece sprites from asset directories."""
-        base_path = self.project_root / "assests" / "piece_mine"
-        if base_path.exists():
-            for folder in base_path.iterdir():
-                if folder.is_dir() and (path := folder / "states" / "idle").exists():
-                    manager = AnimationManager(path)
-                    size = int(self.facade.mapper.cell_size * constants.PIECE_ANIMATION_SCALE)
-                    for frame in manager.frames:
-                        frame.img = cv2.resize(frame.img, (size, size), interpolation=cv2.INTER_AREA)
-                    self.piece_animations[folder.name] = manager
-
     async def start_game_when_matched(self):
         """Wait for match start and initialize game run loop."""
         await self.facade.wait_for_match_and_listen(self._on_match_started)
@@ -151,7 +178,6 @@ class BoardController(Observer):
             self.room_name = room_name
             self.facade.room_name = room_name
 
-        # Pull the assigned color from the facade/network client
         self.player_color = self.facade.player_color
         self.renderer.player_color = self.player_color
 
@@ -162,12 +188,17 @@ class BoardController(Observer):
         await self.run_async()
 
     async def run_async(self):
-        """Run the main asynchronous game render and event loop with exception safety."""
+        """Run the main asynchronous game render and event loop with exception safety and zero magic numbers."""
         last_time = cv2.getTickCount()
+        window_title = getattr(constants, 'WINDOW_NAME', 'Main Board')
+        color_green = getattr(constants, 'COLOR_GREEN_BGR', (0, 255, 0))
+        color_red = getattr(constants, 'COLOR_RED_BGR', (0, 0, 255))
+        wait_delay = getattr(constants, 'CV_WAIT_KEY_DELAY', 1)
+
         try:
             while True:
                 now = cv2.getTickCount()
-                delta_ms = int((now - last_time) * 1000 / cv2.getTickFrequency())
+                delta_ms = int((now - last_time) * constants.MS_PER_SECOND / cv2.getTickFrequency())
                 last_time = now
 
                 if self.disconnect_countdown is not None and self.disconnect_countdown > 0:
@@ -177,40 +208,40 @@ class BoardController(Observer):
                         self.disconnect_countdown -= 1
 
                     if self.disconnect_countdown <= 0:
-                        self.disconnect_countdown = -1
+                        self.disconnect_countdown = constants.DISCONNECT_INACTIVE_STATE
                         self.win_message = f"Opponent disconnected! {self.facade.username} wins by default!"
                         self.facade.set_game_winner(self.player_color)
 
-                if self.disconnect_countdown == -1 and self.win_message:
-                    canvas = self.renderer.render(self.board_base.img, self.piece_animations, self.selected_square)
+                if self.disconnect_countdown == constants.DISCONNECT_INACTIVE_STATE and self.win_message:
+                    canvas = self.renderer.render(self.board_base.img, self.renderer.piece_animations, self.selected_square)
                     img_canvas = canvas.img if hasattr(canvas, 'img') else canvas
                     cv2.putText(
                         img_canvas,
                         self.win_message,
-                        (20, 80),
+                        (constants.TEXT_OFFSET_X, constants.TEXT_DISCONNECT_Y),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         constants.TEXT_FONT_SCALE_MEDIUM,
-                        (0, 255, 0),
+                        color_green,
                         constants.TEXT_THICKNESS,
                         cv2.LINE_AA
                     )
-                    cv2.imshow("Main Board", img_canvas)
-                    cv2.waitKey(1)
+                    cv2.imshow(window_title, img_canvas)
+                    cv2.waitKey(wait_delay)
                     await asyncio.sleep(constants.EXIT_DELAY_SECONDS)
                     break
 
                 self.facade._runner.interaction_ctrl.manager.process_time_tick(delta_ms)
-                canvas = self.renderer.render(self.board_base.img, self.piece_animations, self.selected_square)
+                canvas = self.renderer.render(self.board_base.img, self.renderer.piece_animations, self.selected_square)
                 img_canvas = canvas.img if hasattr(canvas, 'img') else canvas
 
                 if self.room_name:
                     cv2.putText(
                         img_canvas,
                         f"Room: {self.room_name}",
-                        (20, 40),
+                        (constants.TEXT_OFFSET_X, constants.TEXT_ROOM_Y),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         constants.TEXT_FONT_SCALE_LARGE,
-                        (0, 255, 0),
+                        color_green,
                         constants.TEXT_THICKNESS,
                         cv2.LINE_AA
                     )
@@ -219,17 +250,17 @@ class BoardController(Observer):
                     cv2.putText(
                         img_canvas,
                         f"Opponent disconnected! Resign in: {self.disconnect_countdown}s",
-                        (20, 80),
+                        (constants.TEXT_OFFSET_X, constants.TEXT_DISCONNECT_Y),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         constants.TEXT_FONT_SCALE_MEDIUM,
-                        (0, 0, 255),
+                        color_red,
                         constants.TEXT_THICKNESS,
                         cv2.LINE_AA
                     )
 
-                cv2.imshow("Main Board", img_canvas)
+                cv2.imshow(window_title, img_canvas)
 
-                if cv2.waitKey(1) & 0xFF == ord('q'):
+                if cv2.waitKey(wait_delay) & constants.KEY_MASK_8BIT == ord(constants.QUIT_KEY_CHAR):
                     break
                 await asyncio.sleep(constants.FRAME_SLEEP_SECONDS)
 

@@ -1,24 +1,37 @@
-import json
 import asyncio
+import json
 
-from config.constants import DEFAULT_PLAYER_NAME, DEFAULT_ELO, DEFAULT_MODE, COLOR_WHITE, COLOR_BLACK, \
-    DISCONNECT_TIMEOUT_SECONDS
+from config.constants import (
+    DEFAULT_PLAYER_NAME, DEFAULT_ELO, DEFAULT_MODE, COLOR_WHITE, COLOR_BLACK,
+    DISCONNECT_TIMEOUT_SECONDS, MSG_TYPE_ERROR, MSG_TYPE_ROOM_CREATED,
+    MSG_TYPE_START, MSG_TYPE_START_VIEWER, MSG_TYPE_OPPONENT_DISCONNECTED,
+    MSG_TYPE_WIN_BY_TIMEOUT
+)
 from src.application.sockets.matchmaker import Matchmaker
 from src.utils.logger.logger import setup_logger
+from shared.messages import LoginMessage, MoveMessage, RoomMessage
 
 logger = setup_logger("ServerLogger", "server_activity.log")
 
 
+class NetworkProtocolCodec:
+    """Server Protocol / Serialization Layer - Handles message decoding."""
+
+    @staticmethod
+    def decode_message(raw_message: str) -> dict:
+        return json.loads(raw_message)
 
 
 class GameServer:
-    """Manages active game rooms, custom room names, passwords, viewers, and disconnections."""
+    """Manages active game rooms, custom room names, passwords, viewers, and disconnections using typed DTO payloads."""
+
     def __init__(self, matchmaker: Matchmaker):
         self.rooms = {}
         self.player_names = {}
         self.player_elos = {}
         self.websocket_rooms = {}
         self.matchmaker = matchmaker
+        self.codec = NetworkProtocolCodec()
 
         self.handlers = {
             'LOGIN': self._handle_login,
@@ -28,9 +41,16 @@ class GameServer:
         }
 
     async def handle_connection(self, websocket):
+        """Listens for incoming websocket messages and routes them to corresponding handlers using the protocol codec."""
         try:
             async for message in websocket:
-                data = json.loads(message)
+                try:
+                    # Delegated to protocol codec layer
+                    data = self.codec.decode_message(message)
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to decode incoming JSON message: {e} | Message: {message}")
+                    continue
+
                 msg_type = data.get('type')
                 logger.info(f"Received message type '{msg_type}' from client.")
 
@@ -45,11 +65,12 @@ class GameServer:
         finally:
             await self._handle_disconnection(websocket)
 
-
     async def _handle_login(self, websocket, data):
-        username = data.get('username', DEFAULT_PLAYER_NAME)
-        elo = data.get('elo', DEFAULT_ELO)
-        mode = data.get('mode', DEFAULT_MODE)
+        """Deserializes and processes player login/authentication payloads."""
+        login_msg = LoginMessage(**data)
+        username = login_msg.username
+        elo = login_msg.elo
+        mode = login_msg.mode
 
         self.player_names[websocket] = username
         self.player_elos[websocket] = elo
@@ -64,14 +85,13 @@ class GameServer:
             asyncio.create_task(self._process_matchmaking(player_session))
 
     async def _handle_create_room(self, websocket, data):
+        """Creates a custom game room with optional password protection."""
         room_name = data.get('room_name')
         password = data.get('password', '')
 
         if room_name in self.rooms:
-            await websocket.send(json.dumps({
-                "type": "ERROR",
-                "message": f"Room '{room_name}' already exists!"
-            }))
+            error_msg = RoomMessage(type=MSG_TYPE_ERROR, message=f"Room '{room_name}' already exists!")
+            await websocket.send(error_msg.to_json())
         else:
             self.rooms[room_name] = {
                 "white": websocket,
@@ -83,32 +103,26 @@ class GameServer:
             self.websocket_rooms[websocket] = room_name
             logger.info(f"Room '{room_name}' created by {self.player_names.get(websocket, DEFAULT_PLAYER_NAME)}")
 
-            await websocket.send(json.dumps({
-                "type": "ROOM_CREATED",
-                "room_name": room_name,
-                "color": COLOR_WHITE
-            }))
+            room_created_msg = RoomMessage(type=MSG_TYPE_ROOM_CREATED, room_name=room_name, color=COLOR_WHITE)
+            await websocket.send(room_created_msg.to_json())
 
     async def _handle_join_room(self, websocket, data):
+        """Allows a player or viewer to join an existing game room."""
         target_room = data.get('room_name')
         password = data.get('password', '')
 
         if target_room not in self.rooms:
             logger.warning(f"Player attempted to join non-existent room: {target_room}")
-            await websocket.send(json.dumps({
-                "type": "ERROR",
-                "message": f"Room '{target_room}' does not exist!"
-            }))
+            error_msg = RoomMessage(type=MSG_TYPE_ERROR, message=f"Room '{target_room}' does not exist!")
+            await websocket.send(error_msg.to_json())
             return
 
         room = self.rooms[target_room]
 
         if room["password"] and room["password"] != password:
             logger.warning(f"Incorrect password for room '{target_room}'")
-            await websocket.send(json.dumps({
-                "type": "ERROR",
-                "message": "Incorrect password for this room!"
-            }))
+            error_msg = RoomMessage(type=MSG_TYPE_ERROR, message="Incorrect password for this room!")
+            await websocket.send(error_msg.to_json())
             return
 
         self.websocket_rooms[websocket] = target_room
@@ -117,30 +131,33 @@ class GameServer:
             room["black"] = websocket
             logger.info(f"Player {self.player_names.get(websocket)} joined room '{target_room}' as BLACK.")
 
-            await room[COLOR_WHITE].send(json.dumps({
-                "type": "START",
-                "color": COLOR_WHITE,
-                "room_name": target_room,
-                "opponent": self.player_names.get(websocket, DEFAULT_PLAYER_NAME)
-            }))
-            await websocket.send(json.dumps({
-                "type": "START",
-                "color": COLOR_BLACK,
-                "room_name": target_room,
-                "opponent": self.player_names.get(room["white"], DEFAULT_PLAYER_NAME)
-            }))
+            white_start_msg = RoomMessage(
+                type=MSG_TYPE_START,
+                color=COLOR_WHITE,
+                room_name=target_room,
+                opponent=self.player_names.get(websocket, DEFAULT_PLAYER_NAME)
+            )
+            await room[COLOR_WHITE].send(white_start_msg.to_json())
+
+            black_start_msg = RoomMessage(
+                type=MSG_TYPE_START,
+                color=COLOR_BLACK,
+                room_name=target_room,
+                opponent=self.player_names.get(room["white"], DEFAULT_PLAYER_NAME)
+            )
+            await websocket.send(black_start_msg.to_json())
         else:
             room["viewers"].append(websocket)
             logger.info(f"Player {self.player_names.get(websocket)} joined room '{target_room}' as VIEWER.")
-            await websocket.send(json.dumps({
-                "type": "START_VIEWER",
-                "color": "viewer",
-                "room_name": target_room
-            }))
+            viewer_msg = RoomMessage(type=MSG_TYPE_START_VIEWER, color="viewer", room_name=target_room)
+            await websocket.send(viewer_msg.to_json())
 
     async def _handle_move(self, websocket, data):
-        room_name = data.get('room_name')
+        """Processes and broadcasts strongly-typed move commands to room participants."""
+        move_msg = MoveMessage(**data)
+        room_name = move_msg.room_name
         room = self.rooms.get(room_name)
+
         if room:
             logger.info(f"MOVE command processed in room '{room_name}'")
             targets = []
@@ -152,12 +169,10 @@ class GameServer:
             targets.extend(room['viewers'])
 
             for target in targets:
-                await target.send(json.dumps({
-                    "type": "MOVE",
-                    "data": data['data']
-                }))
+                await target.send(move_msg.to_json())
 
     async def _process_matchmaking(self, player_session):
+        """Handles automated matchmaking queue processing and room initialization."""
         logger.info(f"Player {player_session['username']} entered auto-matchmaking queue.")
         matched_opponent = await self.matchmaker.add_to_queue(player_session)
 
@@ -178,21 +193,24 @@ class GameServer:
             self.websocket_rooms[p1_ws] = room_name
             self.websocket_rooms[p2_ws] = room_name
 
-            await p1_ws.send(json.dumps({
-                "type": "START",
-                "color": COLOR_WHITE,
-                "room_name": room_name,
-                "opponent": self.player_names.get(p2_ws, DEFAULT_PLAYER_NAME)
-            }))
+            p1_start = RoomMessage(
+                type=MSG_TYPE_START,
+                color=COLOR_WHITE,
+                room_name=room_name,
+                opponent=self.player_names.get(p2_ws, DEFAULT_PLAYER_NAME)
+            )
+            await p1_ws.send(p1_start.to_json())
 
-            await p2_ws.send(json.dumps({
-                "type": "START",
-                "color": COLOR_BLACK,
-                "room_name": room_name,
-                "opponent": self.player_names.get(p1_ws, DEFAULT_PLAYER_NAME)
-            }))
+            p2_start = RoomMessage(
+                type=MSG_TYPE_START,
+                color=COLOR_BLACK,
+                room_name=room_name,
+                opponent=self.player_names.get(p1_ws, DEFAULT_PLAYER_NAME)
+            )
+            await p2_ws.send(p2_start.to_json())
 
     async def _handle_disconnection(self, websocket):
+        """Handles player disconnections, cleanup, and timeout trigger tasks."""
         if websocket in self.player_names:
             username = self.player_names[websocket]
             logger.info(f"Player disconnected: {username}")
@@ -210,11 +228,13 @@ class GameServer:
                 opponent_ws = room[COLOR_BLACK] if is_white else room[COLOR_WHITE]
 
                 if opponent_ws:
-                    logger.info(f"Player in room '{room_name}' disconnected. Starting {DISCONNECT_TIMEOUT_SECONDS}s countdown.")
-                    await opponent_ws.send(json.dumps({
-                        "type": "OPPONENT_DISCONNECTED",
-                        "countdown": DISCONNECT_TIMEOUT_SECONDS
-                    }))
+                    logger.info(
+                        f"Player in room '{room_name}' disconnected. Starting {DISCONNECT_TIMEOUT_SECONDS}s countdown.")
+                    disconnect_msg = RoomMessage(
+                        type=MSG_TYPE_OPPONENT_DISCONNECTED,
+                        countdown=DISCONNECT_TIMEOUT_SECONDS
+                    )
+                    await opponent_ws.send(disconnect_msg.to_json())
 
                     room["disconnect_task"] = asyncio.create_task(
                         self._disconnect_timeout_task(room_name, opponent_ws)
@@ -226,14 +246,16 @@ class GameServer:
             del self.websocket_rooms[websocket]
 
     async def _disconnect_timeout_task(self, room_name, winner_ws):
+        """Triggers win-by-timeout if a disconnected player fails to reconnect in time."""
         try:
             await asyncio.sleep(DISCONNECT_TIMEOUT_SECONDS)
             if room_name in self.rooms:
                 logger.info(f"Room '{room_name}' closed due to timeout. Opponent wins!")
-                await winner_ws.send(json.dumps({
-                    "type": "WIN_BY_TIMEOUT",
-                    "message": "Opponent disconnected for too long. You win!"
-                }))
+                timeout_msg = RoomMessage(
+                    type=MSG_TYPE_WIN_BY_TIMEOUT,
+                    message="Opponent disconnected for too long. You win!"
+                )
+                await winner_ws.send(timeout_msg.to_json())
                 del self.rooms[room_name]
         except asyncio.CancelledError:
             pass

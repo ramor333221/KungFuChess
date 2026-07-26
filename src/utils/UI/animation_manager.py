@@ -6,7 +6,7 @@ from src.utils.UI.img import Img
 
 class AnimationManager:
     def __init__(self, piece_folder: Path):
-        self.base_path = piece_folder
+        self.base_path = piece_folder  # Root folder of the specific piece (e.g., piece_mine/pawn)
         self.config = json.loads((piece_folder / "config.json").read_text())
         self.state = "idle"
         self.frames = []
@@ -15,11 +15,10 @@ class AnimationManager:
         self.fps = self.config["graphics"]["frames_per_sec"]
         self._load_state_frames("idle")
 
-
     def _load_state_frames(self, state):
         """Loads frames from: piece_mine/[piece]/states/[state]/sprites/"""
         self.frames = []
-        sprites_path = self.base_path / "sprites"
+        sprites_path = self.base_path / "states" / state / "sprites"
         if sprites_path.exists():
             for i in range(1, 6):
                 file_path = sprites_path / f"{i}.png"

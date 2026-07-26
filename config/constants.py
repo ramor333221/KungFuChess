@@ -143,6 +143,7 @@ GAME_OVER_TITLE_Y = 50
 # ==============================================================================
 BOARD_HEADER: str = "Board:"
 COMMANDS_HEADER: str = "Commands:"
+COMMAND_CLICK = "click"
 
 # ==============================================================================
 # SOCKET & NETWORK
@@ -156,6 +157,7 @@ MATCHMAKING_TIMEOUT = 60
 ELO_DIFFERENCE_THRESHOLD = 100
 TRIAL=1
 MAX_TRIAL=5
+RECONNECT_BACKOFF_SECONDS = 3
 
 MSG_TYPE_LOGIN = "LOGIN"
 MSG_TYPE_MOVE = "MOVE"
@@ -165,9 +167,12 @@ MSG_TYPE_ROOM_CREATED = "ROOM_CREATED"
 MSG_TYPE_OPPONENT_DISCONNECTED = "OPPONENT_DISCONNECTED"
 MSG_TYPE_DISCONNECT = "DISCONNECT"
 MSG_TYPE_WIN_BY_TIMEOUT = "WIN_BY_TIMEOUT"
+MSG_TYPE_ERROR = "ERROR"
 
-PROJECT_ROOT = Path("C:/Users/User/Downloads/ChessCTD")
-ASSETS_PATH= PROJECT_ROOT / "assests" / "board.png"
+PROJECT_ROOT = Path("C:/Users/User/Downloads/Kung Fu Chess")
+ASSETS_PATH = PROJECT_ROOT / "assests"
+SERVER_HOST = "localhost"
+SERVER_URI = f"ws://{SERVER_HOST}:{SERVER_PORT}"
 
 # ==============================================================================
 # DATABASE & EVENTS
@@ -182,3 +187,12 @@ EVENT_GAME_OVER = "game_over"
 TOPIC_PLAYER_MOVE = "player_move"
 TOPIC_OPPONENT_MOVE = "opponent_move"
 TOPIC_SERVER_ALERT = "server_alert"
+
+TEXT_OFFSET_X = 20
+TEXT_ROOM_Y = 40
+TEXT_DISCONNECT_Y = 80
+CV_WAIT_KEY_DELAY = 1
+DISCONNECT_INACTIVE_STATE = -1
+MS_PER_SECOND = 1000
+KEY_MASK_8BIT = 0xFF
+QUIT_KEY_CHAR = 'q'

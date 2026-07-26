@@ -1,21 +1,70 @@
+from pathlib import Path
 import time
-
 import cv2
 
 from config import constants
+from config.constants import ASSETS_PATH
+from src.utils.UI.animation_manager import AnimationManager
 
 
 class Renderer:
     """Renders the game board, pieces, valid moves, and side panel UI elements with corrected column orientation for history."""
 
     def __init__(self, facade, player_color='white'):
-        """Initializes the renderer with the facade and player color configuration."""
+        """Initializes the renderer with the facade, player color configuration, and dynamic asset loading."""
         self.facade = facade
         self.player_color = player_color
         self.btn_switch_w = constants.SWITCH_BTN_W
         self.btn_switch_h = constants.SWITCH_BTN_H
         self.btn_switch_y = constants.SWITCH_BTN_Y
         self.btn_switch_x = 0
+
+        self.piece_animations = {}
+        self._load_animations()
+
+    def _load_animations(self):
+        """Dynamically load animated piece sprites and config files safely."""
+        project_root = Path(__file__).resolve().parent.parent.parent
+
+        if ASSETS_PATH and ASSETS_PATH.exists():
+            asset_dir = ASSETS_PATH.parent if ASSETS_PATH.is_file() else ASSETS_PATH
+            base_path = asset_dir / "piece_mine"
+        else:
+            base_path = project_root / "assests" / "piece_mine"
+
+        if base_path.exists():
+            for folder in base_path.iterdir():
+                if folder.is_dir():
+                    piece_code = folder.name
+
+                    # Ensure config.json exists at the root of the piece folder for AnimationManager
+                    root_config = folder / "config.json"
+                    if not root_config.exists():
+                        sub_configs = list(folder.glob("**/config.json"))
+                        if sub_configs:
+                            import shutil
+                            try:
+                                shutil.copy(sub_configs[0], root_config)
+                            except Exception:
+                                pass
+
+                    if root_config.exists():
+                        try:
+                            # Pass the root piece folder to AnimationManager
+                            manager = AnimationManager(folder)
+
+                            # Fixed: Use constants.CELL_SIZE instead of DEFAULT_CELL_SIZE
+                            cell_size = getattr(self.facade.mapper, 'cell_size', constants.CELL_SIZE)
+                            scale = getattr(constants, 'PIECE_ANIMATION_SCALE', 1.0)
+                            size = int(cell_size * scale)
+
+                            for frame in manager.frames:
+                                if hasattr(frame, 'img') and frame.img is not None:
+                                    frame.img = cv2.resize(frame.img, (size, size), interpolation=cv2.INTER_AREA)
+
+                            self.piece_animations[piece_code] = manager
+                        except Exception as e:
+                            print(f"DEBUG: Error loading animation for '{piece_code}': {e}")
 
     def render(self, base_img, piece_animations, selected_square):
         """Renders the complete game canvas including board, pieces, and sidebar information."""
@@ -93,7 +142,6 @@ class Renderer:
         cv2.putText(canvas, "HISTORY", (board_w + constants.SIDEBAR_TEXT_X, constants.HISTORY_Y), constants.FONT,
                     constants.FONT_SCALE_LARGE, constants.COLOR_TEXT_YELLOW, constants.THICKNESS_MEDIUM)
 
-        # Fixed mapping to ensure White history uses the white column and Black history uses the black column
         col_map = {constants.PLAYER_WHITE: board_w + constants.HISTORY_COL_WHITE,
                    constants.PLAYER_BLACK: board_w + constants.HISTORY_COL_BLACK}
 

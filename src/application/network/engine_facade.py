@@ -1,30 +1,30 @@
+from DB.db_manager import DBManager
 from config import constants
 from src.core.game_runner import GameRunner
-from src.utils.UI.img import Img
 from src.utils.input.BoardFactory import BoardFactory
-from src.utils.input.board_mapper import BoardMapper
 from src.utils.observer.achievement_observer import AchievementObserver
 from src.utils.observer.move_observer import MoveLoggerObserver
 from src.utils.observer.observer import Subject
 from src.utils.observer.score_observer import ScoreObserver
 from src.utils.observer.sound_observer import SoundObserver
+from shared.domain import MoveCommand
 
 
 class EngineFacade(Subject):
-    """Facade class bridging the GUI with the game engine logic using the Observer pattern."""
+    """Facade class bridging the GUI with the game engine logic (strictly decoupled from UI and image loading)."""
 
-    def __init__(self, board_path, db_manager, board_matrix=None, player_color=None, username="Player", network_client=None):
+    def __init__(self, board_matrix=None, player_color=None, username="Player", network_client=None):
         super().__init__()
         self._runner = GameRunner()
-        self.db_manager = db_manager
+        self.db_manager = DBManager()
         self.username = username
         self.network_client = network_client
-        self.player_color = player_color
+        self._player_color = player_color
         self._board = board_matrix
-        self.board_base = Img().read(board_path)
-        self.mapper = BoardMapper(self.board_base.img)
+
         self._runner.status.on_game_over = self._handle_game_end
 
+        # Attach observers
         self.attach(ScoreObserver(self.db_manager))
         self.attach(MoveLoggerObserver())
         self.attach(AchievementObserver())
@@ -37,14 +37,21 @@ class EngineFacade(Subject):
 
     @property
     def websocket(self):
-        """Proxy property for network client websocket."""
-        return self.network_client.websocket if self.network_client else None
+        """Proxy property for network client websocket with safe fallback."""
+        if not self.network_client:
+            return None
+        return getattr(self.network_client, 'websocket', getattr(self.network_client, 'ws', None))
 
     @websocket.setter
     def websocket(self, value):
-        """Proxy setter for network client websocket."""
+        """Proxy setter for network client websocket with safe fallback."""
         if self.network_client:
-            self.network_client.websocket = value
+            if hasattr(self.network_client, 'websocket'):
+                self.network_client.websocket = value
+            elif hasattr(self.network_client, 'ws'):
+                self.network_client.ws = value
+            else:
+                setattr(self.network_client, 'websocket', value)
 
     @property
     def opponent_username(self):
@@ -112,20 +119,22 @@ class EngineFacade(Subject):
         if self.network_client:
             await self.network_client.connect_to_server(uri, elo)
 
-    async def send_move(self, move_data):
-        """Send a move via the network client."""
+    async def send_move(self, move_command: MoveCommand):
+        """Send a strongly-typed move command via the network client."""
         if self.network_client:
-            await self.network_client.send_move(move_data)
+            await self.network_client.send_move(move_command)
 
-    def process_move(self, command_str):
-        """Process a game move command and notify observers."""
-        parts = command_str.split()
-        if not parts:
+    def process_move(self, move_command: MoveCommand):
+        """Process a strongly-typed game move command and notify observers."""
+        if not move_command:
             return None
 
+        from_r = move_command.from_row
+        from_c = move_command.from_col
+        to_r = move_command.to_row
+        to_c = move_command.to_col
+
         try:
-            from_r = int(parts[1])
-            from_c = int(parts[2])
             board_matrix = self.get_board_data()
             piece_code = board_matrix[from_r][from_c]
 
@@ -138,11 +147,16 @@ class EngineFacade(Subject):
         except (IndexError, ValueError):
             player_id = self._runner.status.current_turn
 
+        command_str = f"{constants.COMMAND_CLICK} {from_r} {from_c} {to_r} {to_c}"
         self._runner.status.add_history(player_id, command_str)
-        result = self._runner.interaction_ctrl.execute_command(parts[0], parts[1:])
+
+        result = self._runner.interaction_ctrl.execute_command(
+            constants.COMMAND_CLICK,
+            [str(from_r), str(from_c), str(to_r), str(to_c)]
+        )
 
         if not getattr(self._runner.status, constants.ATTR_GAME_OVER, False):
-            self.notify(constants.EVENT_MOVE_COMPLETED, {"data": command_str})
+            self.notify(constants.EVENT_MOVE_COMPLETED, {"data": move_command})
 
         return result
 
@@ -184,10 +198,10 @@ class EngineFacade(Subject):
             self.network_client.on_remote_move = self._handle_remote_move
             await self.network_client.initialize_broker_listeners()
 
-    async def _handle_remote_move(self, move_data):
-        """Handle remote move received from a network client."""
-        if move_data:
-            self.process_move(move_data)
+    async def _handle_remote_move(self, move_command: MoveCommand):
+        """Handle remote move command received from a network client."""
+        if move_command:
+            self.process_move(move_command)
 
     def reset_game(self):
         """Reset the game state to initial layout and values."""

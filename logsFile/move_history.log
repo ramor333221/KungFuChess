@@ -1,16 +1,18 @@
-2026-07-26 08:14:08,949 - INFO - Recorded move: click 1 4 3 4
-2026-07-26 08:14:08,970 - INFO - Recorded move: click 1 4 3 4
-2026-07-26 08:14:17,899 - INFO - Recorded move: click 6 6 4 6
-2026-07-26 08:14:17,921 - INFO - Recorded move: click 6 6 4 6
-2026-07-26 08:37:01,862 - INFO - Recorded move: click 6 5 4 5
-2026-07-26 08:37:01,863 - INFO - Recorded move: click 6 5 4 5
-2026-07-26 08:55:27,298 - INFO - Recorded move: click 6 5 4 5
-2026-07-26 08:55:27,324 - INFO - Recorded move: click 6 5 4 5
-2026-07-26 09:06:19,230 - INFO - Recorded move: click 6 4 4 4
-2026-07-26 09:06:19,240 - INFO - Recorded move: click 6 4 4 4
-2026-07-26 10:01:27,961 - INFO - Recorded move: click 1 2 3 2
-2026-07-26 10:01:27,969 - INFO - Recorded move: click 1 2 3 2
-2026-07-26 10:25:37,109 - INFO - Recorded move: click 6 4 4 4
-2026-07-26 10:25:37,121 - INFO - Recorded move: click 6 4 4 4
-2026-07-26 10:26:08,385 - INFO - Recorded move: click 6 4 4 4
-2026-07-26 10:26:09,809 - INFO - Recorded move: click 6 4 4 4
+2026-07-26 13:36:09,048 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 13:42:22,273 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 13:48:15,835 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 13:48:16,429 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 13:48:27,379 - INFO - Recorded move: MoveCommand(from_row=4, from_col=4, to_row=3, to_col=4)
+2026-07-26 13:48:27,388 - INFO - Recorded move: MoveCommand(from_row=4, from_col=4, to_row=3, to_col=4)
+2026-07-26 14:46:14,256 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 14:51:40,974 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 14:57:27,620 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 14:57:27,627 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 16:02:59,524 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 16:02:59,561 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 16:09:34,717 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 16:09:34,728 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 16:11:19,135 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 16:11:19,145 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 16:11:57,579 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-26 16:11:58,593 - INFO - Recorded move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)

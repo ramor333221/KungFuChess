@@ -1,3 +1,4 @@
+from shared.domain import MoveCommand
 from src.core.controllers.interaction_controller import InteractionController
 from src.core.controllers.movement_controller import MovementController
 from src.core.engine.chess_rules_engine import ChessRulesEngine
@@ -19,7 +20,7 @@ class GameRunner:
         self.interaction_ctrl = None
 
     def run_game(self, raw_matrix, raw_commands):
-        """Validates the board state and executes a sequence of game commands."""
+        """Validates the board state and executes a sequence of game commands (strings or MoveCommands)."""
         try:
             self.board = BoardValidator().validate(raw_matrix)
             if not self.board:
@@ -27,15 +28,22 @@ class GameRunner:
 
             manager = GameStatusManager(self.board, self.status, self.chronology)
             self.movement_ctrl = MovementController(self.board, self.status, self.engine, manager)
-
             self.interaction_ctrl = InteractionController(self.movement_ctrl, self.board, self.status, manager)
 
             for command in raw_commands:
                 if self.status.game_over:
                     break
-                parts = command.split()
-                if parts:
-                    self.interaction_ctrl.execute_command(parts[0], parts[1:])
+
+                if isinstance(command, MoveCommand):
+                    action = command.action
+                    args = [str(command.from_row), str(command.from_col), str(command.to_row), str(command.to_col)]
+                else:
+                    parts = command.split()
+                    if not parts:
+                        continue
+                    action, args = parts[0], parts[1:]
+
+                self.interaction_ctrl.execute_command(action, args)
 
         except BoardValidationError as e:
             print(f"ERROR {e}")

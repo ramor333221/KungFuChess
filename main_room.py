@@ -1,5 +1,7 @@
 import asyncio
+import logging
 from pathlib import Path
+from websockets.exceptions import WebSocketException
 
 from config.constants import ASSETS_PATH, DEFAULT_ELO, DEFAULT_WS_URI
 from src.GUI.portal_window import show_gui_home_screen
@@ -9,9 +11,16 @@ from src.application.network.engine_facade import EngineFacade
 from src.application.network.game_network_client import GameNetworkClient
 from config import constants
 
+# Configure logging for the room client application
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+)
+logger = logging.getLogger("MainRoom")
+
 
 async def main():
-    """Main asynchronous entry point with clean authentication delegation and error handling."""
+    """Main asynchronous entry point with clean authentication delegation, logging, and error handling."""
     action_type, username, room_name, room_password, user_password = show_gui_home_screen()
 
     if action_type == constants.ACTION_CANCEL:
@@ -26,8 +35,6 @@ async def main():
     network_client = GameNetworkClient(username=resolved_username, room_name=room_name)
 
     facade = EngineFacade(
-        board_path=str(ASSETS_PATH) if ASSETS_PATH.exists() else None,
-        db_manager=None,
         username=resolved_username,
         network_client=network_client
     )
@@ -36,9 +43,15 @@ async def main():
 
     try:
         await facade.connect_to_server(DEFAULT_WS_URI, elo=user_elo)
-    except Exception as e:
-        print(f"Connection failed: {e}. Please check if the server is running.")
+    except ConnectionRefusedError:
+        logger.error("Could not connect to the game server. Is it offline?")
         return
+    except WebSocketException as ws_err:
+        logger.error(f"Network protocol error occurred: {ws_err}")
+        return
+    except Exception as unexpected_err:
+        logger.exception(f"An unexpected error occurred: {unexpected_err}")
+        raise
 
     controller = BoardController(facade, board_path=None)
 
@@ -49,5 +62,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except Exception:
-        import traceback
-        traceback.print_exc()
+        logger.exception("Fatal error occurred in main room execution loop.")
