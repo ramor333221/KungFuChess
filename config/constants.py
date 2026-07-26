@@ -27,6 +27,10 @@ COLOR_BLACK = "black"
 COLOR_VIEWER = "viewer"
 PIECE_WHITE_INDICATOR = "W"
 PIECE_BLACK_INDICATOR = "B"
+DEFAULT_PLAYER_NAME = "Player"
+DEFAULT_ELO = 1200
+DEFAULT_MODE = "auto"
+DISCONNECT_TIMEOUT_SECONDS = 20
 
 # ==============================================================================
 # PORTAL & GUI WINDOWS

@@ -1,11 +1,13 @@
 import asyncio
 import websockets
 from src.application.sockets.game_server import GameServer
+from src.application.sockets.matchmaker import Matchmaker
 
 
 async def run_server():
     """Initializes and runs the websocket server for game communication."""
-    server = GameServer()
+    shared_matchmaker = Matchmaker()
+    server = GameServer(shared_matchmaker)
     async with websockets.serve(server.handle_connection, "localhost", 8765):
         print("Server started on ws://localhost:8765. Waiting for players...")
         await asyncio.Future()
