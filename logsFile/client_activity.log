@@ -138,3 +138,7 @@ EOFError
 2026-07-26 17:02:05,665 - INFO - Connected to server at ws://localhost:8765 as b
 2026-07-26 17:02:09,246 - INFO - Processing remote move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
 2026-07-26 17:02:16,253 - INFO - Processing remote move: MoveCommand(from_row=4, from_col=4, to_row=3, to_col=4)
+2026-07-27 09:12:33,795 - INFO - Connected to server at ws://localhost:8765 as A
+2026-07-27 09:12:45,423 - INFO - Connected to server at ws://localhost:8765 as B
+2026-07-27 09:14:04,611 - INFO - Processing remote move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
+2026-07-27 09:14:12,339 - INFO - Processing remote move: MoveCommand(from_row=4, from_col=4, to_row=3, to_col=4)

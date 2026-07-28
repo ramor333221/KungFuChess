@@ -191,3 +191,13 @@
 2026-07-26 17:02:09,246 - INFO - Played move sound effect.
 2026-07-26 17:02:16,237 - INFO - Played move sound effect.
 2026-07-26 17:02:16,253 - INFO - Played move sound effect.
+2026-07-27 09:12:33,731 - INFO - Loaded sound file: move.wav
+2026-07-27 09:12:33,740 - INFO - Loaded sound file: capture.wav
+2026-07-27 09:12:33,749 - INFO - Loaded sound file: game_over.wav
+2026-07-27 09:12:45,390 - INFO - Loaded sound file: move.wav
+2026-07-27 09:12:45,391 - INFO - Loaded sound file: capture.wav
+2026-07-27 09:12:45,391 - INFO - Loaded sound file: game_over.wav
+2026-07-27 09:14:04,593 - INFO - Played move sound effect.
+2026-07-27 09:14:04,611 - INFO - Played move sound effect.
+2026-07-27 09:14:12,330 - INFO - Played move sound effect.
+2026-07-27 09:14:12,340 - INFO - Played move sound effect.
