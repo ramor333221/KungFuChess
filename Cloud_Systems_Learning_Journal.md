@@ -214,3 +214,122 @@ Redis is an ultra-fast, in-memory data store that serves as a foundational compo
 | (Stateless HTTP)| |(Bi-directional)| | (Secure Inter-Service) |
 └─────────────────┘ └─────────────┘ └─────────────────────────┘
 ```
+
+## High-Level System Design Concepts
+
+### Scaling Strategies: Vertical vs. Horizontal
+
+### 1. Scale Up (Vertical)
+* **What:** Upgrading hardware resources (CPU, RAM, storage) on a single server or container instance.
+* **Benefits:** Architectural simplicity; ideal for stateful apps and early-stage MVPs.
+* **When to Choose:** During early development, low or predictable traffic, or when operational overhead must be minimized.
+
+### 2. Scale Out (Horizontal)
+* **What:** Adding multiple server or container instances behind a load balancer to distribute traffic.
+* **Benefits:** High availability, fault tolerance, and elastic capacity (infinite scaling ceiling).
+* **When to Choose:** Stateless applications, volatile traffic spikes, and systems requiring zero-downtime resilience.
+
+
+## Inter-Service Communication: NATS & Redis Pub/Sub
+
+### 1. Core Summary
+Decoupled, asynchronous messaging layers that eliminate direct HTTP dependencies between microservices, enabling real-time, event-driven data flow and high-throughput task distribution.
+
+### 2. Key Technologies & Trade-offs
+* **Redis Pub/Sub**
+  * **What:** In-memory, broadcast-style messaging built directly into Redis.
+  * **Characteristics:** Ultra-fast, fire-and-forget (no persistence; offline clients miss messages), and fan-out behavior (every subscriber receives every message).
+  * **When to Choose:** Simple real-time event broadcasting where Redis is already present and occasional message loss is acceptable.
+* **NATS**
+  * **What:** Purpose-built, cloud-native message broker designed for distributed systems.
+  * **Characteristics:** Subject-based hierarchical routing, built-in queue groups for worker load balancing, and optional persistence/replay via JetStream.
+  * **When to Choose:** Scalable microservices architectures requiring robust task queueing, high reliability, and resilient event streaming.
+
+### 3. Architecture Diagram
+```text
+[ Publisher Microservice ]
+        │
+        ├───────> [ Redis Pub/Sub ] ─────────> (Broadcast / Fire-and-Forget)
+        │                                              │
+        │                                              ▼
+        │                                   [ All Active Subscribers ]
+        │
+        └───────> [ NATS JetStream ] ────────> (Queue Groups / Load Balanced)
+                                                       │
+                                       ┌───────────────┴───────────────┐
+                                       ▼                               ▼
+                             [ Worker Instance A ]           [ Worker Instance B ]
+```
+
+
+## Redis & PostgreSQL: Ephemeral vs. Permanent Data Architecture
+
+### Choose Redis When:
+* **Data is ephemeral and temporary:** The information has a short lifespan and is designed to expire or change rapidly .
+* **Sub-millisecond performance is critical:** Real-time workflows require instant read/write speeds directly from memory (RAM) rather than slower disk-based storage.
+* **Data loss is acceptable or non-critical:** If a server restarts and transient cache or room state is lost, it will not corrupt core business records or history.
+* **High-frequency state changes occur:** Perfect for tracking live, fast-moving updates like user heartbeats, rate-limiting counters, or real-time presence.
+
+### Choose PostgreSQL When:
+* **Data must be permanently preserved:** Information requires long-term storage, strict durability, and reliable crash recovery.
+* **Complex relational queries and integrity are required:** You need foreign keys, multi-table joins, aggregations, and strict schema validation (ACID compliance).
+* **Data structure is structured and relational:** Information maps cleanly into normalized tables with defined relationships .
+* **Auditability and history matter:** You need an immutable, reliable historical record of past events and outcomes that can never be lost or altered unexpectedly.
+## Real-Time Multi-User Cloud Architecture
+
+### 1. Core Summary
+Cloud systems supporting concurrent, real-time multi-user environments rely on a decoupled stack that separates persistent records, ephemeral state, message routing, and persistent transport layers.
+
+### 2. Key Architectural Layers
+* **WebSockets:** Persistent, full-duplex TCP connections enabling low-latency, bi-directional communication between clients and backend servers.
+* **Redis (Ephemeral State):** Ultra-fast in-memory storage managing volatile, high-frequency data such as active room tracking, matchmaking queues, and session reconnect states.
+* **NATS / Pub-Sub (Event Bus):** Asynchronous message broker that decouples services, enabling event broadcasting and load-balanced task distribution across stateless nodes.
+* **PostgreSQL (Permanent Storage):** Relational database ensuring strict ACID compliance, data integrity, and long-term persistence for user profiles, core records, and historical logs.
+
+### 3. Architecture Diagram
+```text
+[ Client A/B (WebSocket) ] ──> [ Load Balancer (Sticky Sessions) ]
+                                        │
+                                        ▼
+                              [ Stateless App Nodes ]
+                                        │
+         ┌──────────────────────────────┼──────────────────────────────┐
+         ▼                              ▼                              ▼
+[ Redis (Ephemeral) ]        [ NATS (Message Bus) ]        [ PostgreSQL (Permanent) ]
+• Active Rooms               • Event Broadcasting          • User Accounts & History
+• Matchmaking Queues         • Worker Coordination         • ACID Persistence
+```
+
+## Server Failures & Fault Tolerance: Comprehensive Conclusion
+
+### 1. Core Concepts Summary
+* **Fault Tolerance & High Availability (HA):** Designing redundant infrastructure to ensure continuous operation and minimal downtime when components crash.
+* **Automated Detection & Failover:** Using health probes, heartbeats, and orchestrators (like Kubernetes or Redis Sentinel) to instantly detect dead nodes, reroute traffic, and promote backup replicas.
+* **Stateless vs. Stateful Design:** Stateless application layers allow seamless container restarts and horizontal scaling, while stateful layers (databases, caches) require active replication or backup mechanisms.
+* **Recovery Mechanisms:** 
+  * **Snapshots:** Point-in-time backups for disaster recovery and restoring corrupted environments.
+  * **Extra Servers (Hot/Warm Standby):** Redundant instances ready to take over workloads instantly to prevent data loss or extended outages.
+
+### 2. Decision Framework: How to Choose Technologies
+* **Scale:** Use simple VM snapshots and standby servers for small setups; deploy container orchestration (Kubernetes) for complex distributed microservices.
+* **Downtime Tolerance (RTO/RPO):** Choose hot standbies and automated replication for mission-critical systems requiring zero downtime; rely on auto-restart and periodic snapshots for internal or low-risk applications.
+* **State Management:** Decouple application state into managed data layers (PostgreSQL clusters, Redis) while keeping application nodes completely stateless.
+
+### 3. Architecture Diagram
+```text
+[ Client Traffic ] ──> [ Load Balancer / Ingress ]
+                             │
+     ┌───────────────────────┴───────────────────────┐
+     ▼                                               ▼
+[ Healthy Node 1 ]                           [ Crashed Node 2 ]
+     │                                               │
+     │ (Heartbeat / Health Probe Fails)              │
+     └───────────────────────┬───────────────────────┘
+                             ▼
+             [ Orchestrator / Automated Failover ]
+             • Kubernetes Reschedules / Restarts Pod
+             • Redis Sentinel Promotes Replica Node
+                             │
+                             ▼
+                  [ Restored System Uptime ]
+```
