@@ -171,7 +171,7 @@ MSG_TYPE_ERROR = "ERROR"
 
 PROJECT_ROOT = Path("C:/Users/User/Downloads/Kung Fu Chess")
 ASSETS_PATH = PROJECT_ROOT / "assests"
-SERVER_HOST = "localhost"
+SERVER_HOST = "0.0.0.0"
 SERVER_URI = f"ws://{SERVER_HOST}:{SERVER_PORT}"
 
 # ==============================================================================

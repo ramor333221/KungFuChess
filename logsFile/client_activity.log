@@ -142,3 +142,26 @@ EOFError
 2026-07-27 09:12:45,423 - INFO - Connected to server at ws://localhost:8765 as B
 2026-07-27 09:14:04,611 - INFO - Processing remote move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)
 2026-07-27 09:14:12,339 - INFO - Processing remote move: MoveCommand(from_row=4, from_col=4, to_row=3, to_col=4)
+2026-07-28 13:08:03,683 - ERROR - Fatal error occurred in main execution loop.
+Traceback (most recent call last):
+  File "C:\Users\User\Downloads\Kung Fu Chess\main_shell.py", line 9, in <module>
+    asyncio.run(run_client_application())
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python313\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\User\AppData\Local\Programs\Python\Python313\Lib\asyncio\base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\application\bootstrap.py", line 24, in run_client_application
+    user_info = auth.login() if hasattr(auth, "login") else None
+                ~~~~~~~~~~^^
+  File "C:\Users\User\Downloads\Kung Fu Chess\src\application\auth\auth_handler.py", line 15, in login
+    password = input("Enter Password: ")
+EOFError
+2026-07-28 13:22:02,301 - INFO - Connected to server at ws://localhost:8765 as a
+2026-07-28 13:22:09,821 - INFO - Connected to server at ws://localhost:8765 as b
+2026-07-28 13:22:17,283 - INFO - Processing remote move: MoveCommand(from_row=6, from_col=4, to_row=4, to_col=4)

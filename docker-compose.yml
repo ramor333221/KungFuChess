@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # שרת ה-FastAPI (REST API)
+  web:
+    build: .
+    container_name: chess_web_server
+    restart: always
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8080
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=chess_db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - chess-net
+
+  # שרת ה-WebSocket של המשחק
+  websocket:
+    build: .
+    container_name: chess_websocket_server
+    restart: always
+    command: python server_main.py
+    ports:
+      - "8765:8765"
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=chess_db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - chess-net
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: chess_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: chess_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - chess-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: chess_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - chess-net
+
+volumes:
+  pgdata:
+  redisdata:
+
+networks:
+  chess-net:
+    driver: bridge
