@@ -158,3 +158,71 @@
 ## 5. Sharded SQL Persistence & Edge JWT Validation
 * **Decision:** Store long-term player accounts and profiles for 100M registered users in a horizontally sharded SQL database (e.g., CockroachDB) and validate sessions using stateless Edge JWTs.
 * **Explanation:** Core identity and progression data require robust transactional safety. Validating JSON Web Tokens at the edge gateway prevents authentication spikes from hitting or overwhelming primary game servers during peak concurrency.
+
+# Refactor High-Scale Multiplayer Routing & Session Management
+```text
++-------------------------------------------------------------------------------------------------+
+|                                         Global Clients                                          |
++--------------------------+---------------------------------------+------------------------------+
+                           | (WSS / Active Players)                | (SSE / Spectators)
+                           v                                       v
++-------------------------------------------------------------------------------------------------+
+|                                     Anycast Edge / CDN / LB                                     |
++--------------------------+---------------------------------------+------------------------------+
+                           |                                       |
+                           v                                       v
++--------------------------------------+             +--------------------------------------+
+|          WebSocket Gateways          |             |             SSE Gateways             |
+|       (Active WSS Connections)       |             |         (Spectator Feeds)            |
++------------------+-------------------+             +------------------+-------------------+
+                   |                                                      ^
+                   v                                                      | (500ms Batch Push)
++-----------------------------------------------------------------+       |
+|                   Redis Distributed Registry                    |       |
+|  (ConnectionID <-> ShardID, PlayerID <-> GatewayID & MSSTs)     |       |
++-----------------------------------------------------------------+       |
+                   |                                                      |
+                   v (Direct gRPC)                                        |
++--------------------------------------+                                  |
+|     In-Memory Game Server Shards     |                                  |
+|  (Authoritative Logic, RAM Move Logs)|                                  |
++------------------+-------------------+                                  |
+                   |                                                      |
+         (Asynchronous AOF Flush)         (Publish Match Events)          |
+                   |                                                      |
+                   v                                                      v
++--------------------------------------+             +--------------------------------------+
+|          Background Disk             |             |            NATS JetStream            |
+|              Worker                  |             |   (Event Broker & Replay Buffer)     |
++--------------------------------------+             +------------------+-------------------+
+                                                                          |
+                                                                 (500ms Batch Worker)
+                                                                          |
+                                                                          v
+                                                     +--------------------------------------+
+                                                     |            CDN Edge Cache            |
+                                                     |            (Edge KV / KV)            |
+                                                     +--------------------------------------+
+```
+## Decision 1: Centralized Redis Distributed Registry & Direct gRPC Routing
+* **Forward Mapping (`ConnectionID -> ShardID`):** Maintains a direct link between an active client WebSocket connection at the Edge Gateway and its assigned, ephemeral In-Memory Game Server Shard.
+* **Reverse Mapping (`PlayerID -> GatewayID`):** Tracks which global Edge Gateway holds a specific player's open socket, enabling server-initiated push events (such as lobby updates, party invites, or emergency bans) to target the correct edge node instantly.
+* **Direct Point-to-Point Routing:** Real-time move packets bypass distributed discovery buses entirely. Edge Gateways utilize local memory or fast Redis lookups to route packets straight to the authoritative shard via internal **gRPC**.
+
+### Explanation
+* **Eliminates Broadcast Overhead:** Routing move traffic directly protects the system from distributed pub/sub congestion and high latency spikes.
+* **Precise Bi-Directional Targetability:** Solves the multi-gateway distribution challenge, ensuring server-pushed events reach the correct user socket without network waste.
+* **Domain Fit:** While centralized state registries introduce a dependency, this lookup occurs **once** during match initialization. Subsequent game moves flow over persistent connections via internal gRPC, making the trade-off ideal for deterministic, low-latency gameplay. Furthermore, the short match lifecycle ensures ephemeral data automatically expires, preventing long-term memory bloat.
+
+---
+
+## Decision 2: Two-Tiered Authentication & Match-Scoped Session Tokens (MSST)
+
+* **Tier 1 (Edge JWTs):** Stateless tokens used strictly for the initial connection handshake and user session verification at the Edge Gateway.
+* **Tier 2 (Match-Scoped Session Tokens - MSST):** Ephemeral, short-lived tokens issued by the Game Allocator the moment a match starts, stored as temporary Redis keys with tight TTLs corresponding to match duration.
+* **Socket Upgrade Validation:** Gateways validate the MSST against Redis upon match initialization rather than relying solely on long-lived identity tokens.
+
+### Explanation
+* **Instant Mid-Match Revocation:** Allows administrators or automated security systems to invalidate an MSST in Redis immediately, terminating a cheater's session or dropping a banned user mid-game without waiting hours for a standard JWT to expire.
+* **Preserves Edge Efficiency:** Combines the fast performance of stateless tokens for general entry with strict, stateful control over active match participation.
+* **Domain Fit:** Traditional web architectures avoid stateful validation per request to save database lookups. For a competitive multiplayer environment, the minor one-time handshake cost is a necessary and highly effective price to guarantee absolute security control and instant ban execution.
