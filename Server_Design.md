@@ -226,3 +226,63 @@
 * **Instant Mid-Match Revocation:** Allows administrators or automated security systems to invalidate an MSST in Redis immediately, terminating a cheater's session or dropping a banned user mid-game without waiting hours for a standard JWT to expire.
 * **Preserves Edge Efficiency:** Combines the fast performance of stateless tokens for general entry with strict, stateful control over active match participation.
 * **Domain Fit:** Traditional web architectures avoid stateful validation per request to save database lookups. For a competitive multiplayer environment, the minor one-time handshake cost is a necessary and highly effective price to guarantee absolute security control and instant ban execution.
+
+
+## Refactor - Decentralized Edge Caching via Redis Pub/Sub and Local JWT MSST
+```text
++-------------------------------------------------------------------------------------------------+
+|                                         Global Clients                                          |
++--------------------------+---------------------------------------+------------------------------+
+                           | (WSS / Active Players)                | (SSE / Spectators)
+                           v                                       v
++-------------------------------------------------------------------------------------------------+
+|                                     Anycast Edge / CDN / LB                                     |
++--------------------------+---------------------------------------+------------------------------+
+                           |                                       |
+                           v                                       v
++--------------------------------------+             +--------------------------------------+
+|          WebSocket Gateways          |             |             SSE Gateways             |
+|   (WSS + Local JWT RAM Validation)   |             |         (Spectator Feeds)            |
++------------------+-------------------+             +------------------+-------------------+
+                   | (Local RAM Lookups)                                    ^
+                   v                                                        | (500ms Batch Push)
++-----------------------------------------------------------------+         |
+|                     Redis Distributed Registry                  |         |
+|  (Pub/Sub Sync for Gateway Maps & Revocation Blacklist Set)     |         |
++-----------------------------------------------------------------+         |
+                   |                                                        |
+                   v (Direct gRPC)                                          |
++--------------------------------------+                                    |
+|     In-Memory Game Server Shards     |                                    |
+|  (Authoritative Logic, RAM Move Logs)|                                    |
++------------------+-------------------+                                    |
+                   |                                                        |
+         (Asynchronous AOF Flush)         (Publish Match Events)            |
+                   |                                                        |
+                   v                                                        v
++--------------------------------------+             +--------------------------------------+
+|          Background Disk             |             |            NATS JetStream            |
+|              Worker                  |             |   (Event Broker & Replay Buffer)     |
++--------------------------------------+             +------------------+-------------------+
+                                                                            |
+                                                                   (500ms Batch Worker)
+                                                                            |
+                                                                            v
+                                                       +--------------------------------------+
+                                                       |            CDN Edge Cache            |
+                                                       |            (Edge KV / KV)            |
+                                                       +--------------------------------------+
+```
+## 1. Decentralized Edge Caching & Pub/Sub Registry
+
+* **Decision 1:** Replaced direct centralized Redis registry lookups for active routing (`PlayerID -> GatewayID`) with local in-memory RAM caches on Edge Gateways, synchronized via Redis Pub/Sub.
+* **Explanation:** In Kung Fu Chess, matches last only 30–90 seconds, causing players and live spectators to constantly switch rooms, lobbies, and views every minute. Local RAM lookups allow edge nodes to route spectator feeds and player tracking instantly in nanoseconds without centralized lookup delays.
+* **Why the disadvantages were taken in advance (Trade-off acceptance):** We knowingly accepted the trade-offs of **cache consistency lag** (brief windows of stale routing data during Pub/Sub propagation) and **higher gateway RAM usage** because the alternative—hammering central Redis with thousands of concurrent lookups per second—would cause severe bottlenecking and latency spikes that would ruin the game's fast pacing. Protecting the real-time game loop and enabling instant spectator scaling far outweighed the minor risk of temporary propagation delay.
+
+---
+
+## 2. Two-Tiered Auth with Local JWT MSSTs & Revocation Blacklist
+
+* **Decision 2:** Upgraded Match-Scoped Session Token (MSST) validation from stateful database queries on every single connection handshake to cryptographically signed local JWTs verified instantly in RAM, using Redis strictly as an instant revocation blacklist.
+* **Explanation:** The 30–90 second match duration creates continuous, predictable waves of heavy connection handshakes every minute as players cycle back into queues. Local JWT validation eliminates database round-trips entirely during these peak match-start windows.
+* **Why the disadvantages were taken in advance (Trade-off acceptance):** We knowingly accepted the trade-offs of **clock drift sensitivity** (requiring tight NTP synchronization between the allocator and gateways) and **blacklist Redis memory overhead** because eliminating match-start database latency is non-negotiable for a fast-paced game. The ability to instantly drop disruptive participants mid-game via the Redis blacklist while maintaining zero-latency handshakes for legitimate players justified accepting these structural complexities upfront.
