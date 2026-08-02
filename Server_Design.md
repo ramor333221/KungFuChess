@@ -286,3 +286,125 @@
 * **Decision 2:** Upgraded Match-Scoped Session Token (MSST) validation from stateful database queries on every single connection handshake to cryptographically signed local JWTs verified instantly in RAM, using Redis strictly as an instant revocation blacklist.
 * **Explanation:** The 30–90 second match duration creates continuous, predictable waves of heavy connection handshakes every minute as players cycle back into queues. Local JWT validation eliminates database round-trips entirely during these peak match-start windows.
 * **Why the disadvantages were taken in advance (Trade-off acceptance):** We knowingly accepted the trade-offs of **clock drift sensitivity** (requiring tight NTP synchronization between the allocator and gateways) and **blacklist Redis memory overhead** because eliminating match-start database latency is non-negotiable for a fast-paced game. The ability to instantly drop disruptive participants mid-game via the Redis blacklist while maintaining zero-latency handshakes for legitimate players justified accepting these structural complexities upfront.
+
+## Architectural Component & Physical Topology
+```text
++-------------------------------------------------------------------------------------------------+
+|                                         Global Clients                                          |
++--------------------------+---------------------------------------+------------------------------+
+                           | (WSS / Active Players)                | (SSE / Spectators)
+                           v                                       v
++-------------------------------------------------------------------------------------------------+
+|                                     Anycast Edge / CDN / LB                                     |
++--------------------------+---------------------------------------+------------------------------+
+                           |                                       |
+                           v                                       v
++--------------------------------------+             +--------------------------------------+
+|          WebSocket Gateways          |             |             SSE Gateways             |
+|   (WSS + Local JWT RAM Validation)   |             |         (Spectator Feeds)            |
++------------------+-------------------+             +------------------+-------------------+
+                   | (Local RAM Lookups)                                    ^
+                   v                                                        | (500ms Batch Push)
++-----------------------------------------------------------------+         |
+|                     Redis Distributed Registry                  |         |
+|  (Pub/Sub Sync for Gateway Maps & Revocation Blacklist Set)     |         |
++-----------------------------------------------------------------+         |
+                   |                                                        |
+                   v (Direct gRPC)                                          |
++--------------------------------------+                                    |
+|     In-Memory Game Server Shards     |                                    |
+|  (Authoritative Logic, RAM Move Logs)|                                    |
++------------------+-------------------+                                    |
+                   |                                                        |
+         (Stream Move Log & AOF)           (Publish Match Events)           |
+                   |                                                        |
+                   v                                                        v
++--------------------------------------+             +--------------------------------------+
+|            NATS JetStream            |             |            NATS JetStream            |
+|   (Authoritative Replay Buffer &     |             |   (Event Broker & Replay Buffer)     |
+|        Instant <2ms Recovery)        |             +------------------+-------------------+
++------------------+-------------------+                                    |
+                   |                                                        |
+         (Hot-Swap State Replay)                                  (500ms Batch Worker)
+                   |                                                        |
+                   v                                                        v
++--------------------------------------+             +--------------------------------------+
+|          Background Disk /           |             |            CDN Edge Cache            |
+|       New Shard Recovery Node        |             |            (Edge KV / KV)            |
++--------------------------------------+             +--------------------------------------+
+```
+
+## Diagram 2: Sequence Diagram – Connection, Handshake & Move Lifecycle
+
+```text
+Client              Anycast Edge        WebSocket Gateway      Redis Registry      Game Shard
+  |                      |                     |                     |                  |
+  |--- 1. WSS Connect -->|                     |                     |                  |
+  |    (with MSST JWT)   |--- Proxy WSS ------>|                     |                  |
+  |                      |                     |-- 2. Verify JWT --->|                  |
+  |                      |                     |    (RAM Signature)  |                  |
+  |                      |                     |-- 3. Check Blacklist --> (Lookup OK)   |
+  |                      |                     |                     |                  |
+  |                      |                     |-- 4. Register Session ---------------->|
+  |                      |                     |    (PlayerID <-> GW)                   |
+  |                      |                     |                     |                  |
+  |--- 5. Send Move ---->|                     |                     |                  |
+  |                      |--- Stream Move ---->|                     |                  |
+  |                      |                     |--- 6. gRPC Forward ------------------->|
+  |                      |                     |    (Direct Move Packet)                |
+  |                      |                     |                     |                  | (Update RAM Move Log)
+  |                      |                     |                     |                  | (Publish Event to NATS)
+```
+
+## Server Crash & Recovery Flow
+```text
+Game Shard           Redis Registry         NATS JetStream         New Shard Node         Gateway
+    |                       |                      |                      |                  |
+    |--- X CRASH! X         |                      |                      |                  |
+    |                       |                      |                      |                  |
+    |                       |-- 1. Start 20s TTL ->|                      |                  |
+    |                       |    Grace Period      |                      |                  |
+    |                       |    (Preserves Route) |                      |                  |
+    |                       |                      |                      |                  |
+    |                       |                      |<-- 2. Pull Complete --|                  |
+    |                       |                      |    Move History      |                  |
+    |                       |                      |    (Complete Log)    |                  |
+    |                       |                      |                      |                  |
+    |                       |                      |-- 3. Replay Stream ->|                  |
+    |                       |                      |    (<2ms RAM State)  |                  |
+    |                       |                      |                      |                  |
+    |                       |<-- 4. Update Binding -----------------------|                  |
+    |                       |    (New Shard ID)                            |                  |
+    |                       |                                             |                  |
+    |                       |---------------------------------------------+----------------->|
+    |                       |    Pub/Sub: Route Updated                   |    (Resume gRPC) |
+```
+
+## User Crash & 20-Second Reconnection Window
+```text
+Client             Anycast Edge       Gateway          Redis Registry     Game Shard
+  |                     |                |                   |                  |
+  |--- X DROP / X ------|                |                   |                  |
+  |    (Network Loss)   |                |                   |                  |
+  |                     |--- Detect Drop |                   |                  |
+  |                     |    (Close WSS) |                   |                  |
+  |                     |                |-- Notify Drop --->|                  |
+  |                     |                |                   |-- Start Grace -->|
+  |                     |                |                   |    Timer (20s)   |
+  |                     |                |                   |                  |
+  |   [Reconnection within 20-Second Window]                 |                  |
+  |--- Reconnect ------>|                |                   |                  |
+  |    (New WSS/MSST)   |--- Proxy WSS ->|-- Validate JWT -->|                  |
+  |                     |                |-- Rebind Session->|                  |
+  |                     |                |                   |--- Resume State->|
+  |                     |                |                   |                  |
+  |   [If Timeout Exceeds 20s Without Reconnect]             |                  |
+  |                     |                |                   |-- Expire Timer ->|
+  |                     |                |                   |    (Forfeit /    |
+  |                     |                |                   |     Clean up)    |
+```
+
+# TODO
+___
+## Diagram for user flow
+## Deal with login, matchmaker...
